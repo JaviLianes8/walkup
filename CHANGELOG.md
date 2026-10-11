@@ -8,4 +8,7 @@ All notable changes to this project are documented here. The format follows
 
 ## [0.1.0]
 
-- First release.
+- First release: `find_up` to locate a marker file or directory by walking up toward the
+  filesystem root, and `walk_up` to iterate a directory and its ancestors.
+- `find_up` accepts one name or several, takes an optional `root` stop boundary, and can
+  restrict matches to files or directories through `kind`.
