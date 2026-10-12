@@ -3,12 +3,13 @@
 ## The walk
 
 Every search walks from a start path toward the filesystem root, nearest directory first.
-A file as the start begins the walk at its parent. Paths are always absolute. The walk ends
+A start that exists but is not a directory (a file, a device) begins the walk at its parent. Paths are always absolute. The walk ends
 at `/`, at a drive root such as `C:\`, or at the share root of a UNC path such as
 `\\server\share\`, unless an option stops it earlier.
 
 `walk_up(start=".", *, ceilings=(), stop_at=None, same_filesystem=False, resolve=True)`
-yields those directories. Every search function accepts the same four options.
+yields those directories. The searches and the Python, Node and EditorConfig presets
+accept the same four options; the git presets take only `ceilings` (see below).
 
 ### Ceilings and stop_at
 
@@ -35,10 +36,12 @@ or whose device cannot be read. This is what git does unless
 
 ### Symlinks and junctions
 
-`resolve=True` (the default) resolves symlinks and Windows junctions in the start first and
-walks the physical path, like `pwd -P` and git. `resolve=False` walks the lexical path: the
-start is made absolute, `..` is collapsed as text, and linked directories stay in place,
-like `pwd -L`. Ceilings and `stop_at` are normalised with the same policy.
+`resolve=True` (the default) resolves symlinks and Windows junctions in the start first
+and walks the physical path, like `pwd -P` and git. On Windows `Path.resolve` collapses
+`..` before following a junction, so `link\..` names the folder holding the link.
+`resolve=False` walks the lexical path: the start is made absolute, `..` is collapsed as
+text, and linked directories stay in place, like `pwd -L`. Ceilings and `stop_at` are
+normalised with the same policy.
 
 ```python
 # /work/link -> /data/real
@@ -95,16 +98,24 @@ inspected, including inside a `check`, as absent. `on_error="raise"` raises
   `directory` is what `git rev-parse --show-toplevel` prints: the main working tree, a
   linked worktree, or a submodule checkout. A `.git` directory must hold a valid `HEAD`
   and `objects` and `refs` (through `commondir` for a worktree); a `.git` file must start
-  with `gitdir:` naming such a directory. Invalid entries are skipped, as git skips them.
+  with `gitdir: ` (one space) naming such a directory. As in git, an invalid `.git`
+  directory is skipped, but an invalid `.git` file ends the search with `None` (git stops
+  with an error there), and so does starting inside a repository directory (`.git` itself
+  or a bare repository), which has no working tree.
   `ceilings` defaults to `GIT_CEILING_DIRECTORIES` (relative entries ignored) and
   `across_filesystems` to `GIT_DISCOVERY_ACROSS_FILESYSTEM` (false when unset). The walk
-  is always physical. `GIT_DIR` and `GIT_WORK_TREE` are not consulted.
+  is always physical. `GIT_DIR`, `GIT_WORK_TREE`, `core.worktree` and the
+  `safe.directory` ownership check are not consulted.
+- `iter_git_roots(start=".", ...)` yields every enclosing working tree, nearest first: a
+  submodule, then its superproject.
 - `python_root(start=".", ...)` returns the nearest directory with `pyproject.toml`,
   `setup.cfg` or `setup.py` (regular files). `match.names` tells which are present.
 - `node_root(start=".", ...)` returns the nearest directory with a `package.json` file.
+  npm also stops at `node_modules`; add `Marker.dir("node_modules")` to a `find` call for that.
 - `editorconfig_chain(start=".", ...)` returns the `.editorconfig` files that apply,
   nearest first, ending at the first file whose preamble (before any `[section]`) sets
-  `root = true`, compared without regard to case.
+  `root = true`, compared without regard to case. Inline comments are not recognised, as
+  in the current specification; an unreadable file is listed but is not a root.
 
 ## Errors
 
@@ -131,11 +142,15 @@ walkup [options] --preset {git,python,node,editorconfig}
 | `-e, --every` | require every MARKER in one directory |
 | `-k, --kind {any,file,dir}` | what each MARKER must be |
 | `-p, --preset NAME` | use a preset instead of MARKER |
-| `--ceiling DIR` | never enter DIR (repeatable; added to the git environment for `git`) |
+| `--ceiling DIR` | never enter DIR (repeatable; added to `GIT_CEILING_DIRECTORIES` for `git`) |
 | `--stop-at DIR` | search DIR last |
 | `--same-filesystem` | stop at a filesystem boundary |
-| `--lexical` | keep symlinks in the path (ignored by `--preset git`) |
+| `--lexical` | keep symlinks in the path |
 | `--path` | print matched paths instead of directories |
+
+Options a preset cannot honour are usage errors: `--kind` and `--every` with any preset,
+`--lexical` and `--stop-at` with `git`, `--all` with `editorconfig` (it always prints the
+whole chain).
 
 Exit status: 0 when something matched, 1 when nothing matched or on an error (the message
 goes to stderr). `python -m walkup` runs the same tool.
@@ -146,7 +161,7 @@ goes to stderr). `python -m walkup` runs the same tool.
 # Load settings from the project that owns this module.
 here = python_root(__file__)
 
-# A monorepo package: the nearest package.json below the repository root.
+# A monorepo package: the nearest package.json at or below the repository root.
 repo = git_root()
 pkg = find("package.json", ceilings=[repo.directory.parent] if repo else ())
 
@@ -156,5 +171,5 @@ root = require(Marker.dir(".git"), "pyproject.toml", mode="all").directory
 
 ```sh
 # Run a command from the repository root.
-cd "$(walkup --preset git)" && make test
+root=$(walkup --preset git) && cd "$root" && make test
 ```

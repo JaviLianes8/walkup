@@ -49,10 +49,10 @@ walkup --every pyproject.toml .git  # nearest directory holding both
 walkup --all package.json           # every enclosing directory with package.json
 walkup --preset git                 # repository top level
 walkup --preset editorconfig --path # the .editorconfig files that apply here
-cd "$(walkup --preset git)"
+root=$(walkup --preset git) && cd "$root"
 ```
 
-It prints one directory per line, exits 0 when something matched and 1 when nothing did.
+It prints one directory per line (matched paths with `--path`), exits 0 when something matched and 1 when nothing did.
 Errors go to stderr with exit status 1. `walkup --help` lists every option.
 
 ## What you get
@@ -62,8 +62,9 @@ Errors go to stderr with exit status 1. `walkup --help` lists every option.
 - `Marker`: a name plus a kind (`"any"`, `"file"`, `"dir"`) and an optional content check.
 - Walk options shared by every function: git style `ceilings`, an inclusive `stop_at`,
   `same_filesystem`, and `resolve` to choose physical or lexical symlink handling.
-- Presets: `git_root` (validated like git, honouring `GIT_CEILING_DIRECTORIES` and
-  `GIT_DISCOVERY_ACROSS_FILESYSTEM`), `python_root`, `node_root`, `editorconfig_chain`.
+- Presets: `git_root` and `iter_git_roots` (discovery step by step like git, honouring
+  `GIT_CEILING_DIRECTORIES` and `GIT_DISCOVERY_ACROSS_FILESYSTEM`), `python_root`,
+  `node_root`, `editorconfig_chain`.
 - Typed errors that are also the builtin you would expect: `MarkerNotFoundError`
   (`LookupError`), `StartNotFoundError` (`FileNotFoundError`), `InvalidMarkerError`
   (`ValueError`), `WalkupPermissionError` (`PermissionError`), all under `WalkupError`.

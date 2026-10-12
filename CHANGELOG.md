@@ -15,13 +15,15 @@ All notable changes to this project are documented here. The format follows
   inspects the candidate path.
 - `walk_up` and every search accept `ceilings` (git `GIT_CEILING_DIRECTORIES` semantics),
   an inclusive `stop_at`, `same_filesystem`, and `resolve` for physical or lexical walks.
-- Presets: `git_root` (worktrees and submodules, validated like git, honouring the git
-  ceiling and filesystem variables), `python_root`, `node_root` and `editorconfig_chain`.
+- Presets: `git_root` and `iter_git_roots` (worktrees and submodules, discovery step by
+  step like git, honouring the git ceiling and filesystem variables), `python_root`, `node_root` and `editorconfig_chain`.
 - Typed errors: `WalkupError`, `InvalidMarkerError`, `StartNotFoundError`,
   `MarkerNotFoundError` and `WalkupPermissionError`, each also a matching builtin.
 - A `walkup` command line tool (also `python -m walkup`) with `--all`, `--every`,
   `--kind`, `--preset`, `--ceiling`, `--stop-at`, `--same-filesystem`, `--lexical` and
   `--path`.
+- `walk_up` starts at the parent of any existing start that is not a directory, such as a
+  device, not only of a regular file.
 - `GUIDE.md` documents every option and recipe.
 
 ## [0.1.0]
