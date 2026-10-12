@@ -47,8 +47,7 @@ def iter_matches(
     when the call is made, before the first item is requested.
     """
     wanted = coerce_markers(markers)
-    if not os.path.exists(start):
-        raise StartNotFoundError(Path(start))
+    probe_start(start)
     if mode not in ("any", "all"):
         raise ValueError(f"mode must be 'any' or 'all', got {mode!r}")
     if on_error not in ("skip", "raise"):
@@ -149,6 +148,12 @@ def require(
     if found is None:
         raise MarkerNotFoundError(coerce_markers(markers), Path(start), mode)
     return found
+
+
+def probe_start(start: StrPath) -> None:
+    """Raise ``StartNotFoundError`` when ``start`` does not exist."""
+    if not os.path.exists(start):
+        raise StartNotFoundError(Path(start))
 
 
 def _matches(

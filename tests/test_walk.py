@@ -127,22 +127,19 @@ def test_same_filesystem_does_not_stop_on_one_device(tmp_path: Path) -> None:
 
 
 def _other_volume() -> Path | None:
-    here = os.stat(tempfile.gettempdir()).st_dev
-    candidates = ["D:\\", "E:\\"] if IS_WINDOWS else ["/dev/shm", "/run/user"]
-    for raw in candidates:
-        path = Path(raw)
-        try:
-            if path.is_dir() and os.stat(path).st_dev != here and os.access(path, os.W_OK):
-                return path
-        except OSError:
-            continue
-    return None
+    """A writable scratch folder on another filesystem, named by WALKUP_TEST_OTHER_VOLUME."""
+    raw = os.environ.get("WALKUP_TEST_OTHER_VOLUME")
+    if not raw or not Path(raw).is_dir():
+        return None
+    if os.stat(raw).st_dev == os.stat(tempfile.gettempdir()).st_dev:
+        return None
+    return Path(raw)
 
 
 def test_same_filesystem_stops_before_another_device(tmp_path: Path) -> None:
     volume = _other_volume()
     if volume is None:
-        pytest.skip("no second writable filesystem is mounted on this machine")
+        pytest.skip("set WALKUP_TEST_OTHER_VOLUME to a scratch folder on another filesystem")
     remote = Path(tempfile.mkdtemp(dir=volume))
     try:
         (remote / "sub").mkdir()
@@ -154,3 +151,8 @@ def test_same_filesystem_stops_before_another_device(tmp_path: Path) -> None:
         assert len(loose) > 2
     finally:
         shutil.rmtree(remote, ignore_errors=True)
+
+
+@pytest.mark.skipif(IS_WINDOWS, reason="device files live under /dev on POSIX only")
+def test_a_device_start_begins_at_its_parent() -> None:
+    assert next(walk_up(os.devnull)) == Path(os.devnull).resolve().parent

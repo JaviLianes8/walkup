@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pickle
 from pathlib import Path
 
 import pytest
@@ -139,3 +140,20 @@ def test_an_unknown_kind_is_rejected() -> None:
 def test_a_broken_symlink_does_not_count_as_present(tmp_path: Path) -> None:
     symlink(tmp_path / "gone", tmp_path / "dangling")
     assert find("dangling", start=tmp_path, stop_at=tmp_path) is None
+
+
+def test_errors_survive_pickling(tmp_path: Path) -> None:
+    errors = [
+        StartNotFoundError(tmp_path),
+        MarkerNotFoundError((Marker("a"),), tmp_path, "any"),
+        InvalidMarkerError("bad"),
+    ]
+    for error in errors:
+        copy = pickle.loads(pickle.dumps(error))
+        assert type(copy) is type(error) and str(copy) == str(error)
+
+
+def test_the_not_found_message_names_the_absolute_start(tmp_path: Path) -> None:
+    with pytest.raises(MarkerNotFoundError) as info:
+        require("nothing.zz", start=".", stop_at=".")
+    assert str(Path.cwd()) in str(info.value)

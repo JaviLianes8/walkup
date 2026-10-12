@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import pickle
 import subprocess
 import sys
 from pathlib import Path
@@ -61,6 +62,8 @@ def test_an_unreadable_candidate_is_skipped_or_raised(tmp_path: Path) -> None:
             find(marker, start=tmp_path, on_error="raise")
         assert isinstance(info.value, PermissionError)
         assert info.value.path == tmp_path.resolve() / "settings.toml"
+        copy = pickle.loads(pickle.dumps(info.value))
+        assert copy.path == info.value.path
     finally:
         _allow_read(secret)
 

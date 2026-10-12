@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import errno
+import os
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path, PurePath
@@ -32,6 +33,9 @@ class StartNotFoundError(WalkupError, FileNotFoundError):
         super().__init__(errno.ENOENT, "start path does not exist", str(start))
         self.start = start
 
+    def __reduce__(self) -> tuple[type[StartNotFoundError], tuple[Path]]:
+        return (type(self), (self.start,))
+
 
 class WalkupPermissionError(WalkupError, PermissionError):
     """A candidate could not be inspected and ``on_error="raise"`` was requested."""
@@ -39,6 +43,9 @@ class WalkupPermissionError(WalkupError, PermissionError):
     def __init__(self, path: Path) -> None:
         super().__init__(errno.EACCES, "permission denied while probing", str(path))
         self.path = path
+
+    def __reduce__(self) -> tuple[type[WalkupPermissionError], tuple[Path]]:
+        return (type(self), (self.path,))
 
 
 @dataclass(frozen=True)
@@ -125,7 +132,13 @@ class MarkerNotFoundError(WalkupError, LookupError):
     def __init__(self, markers: tuple[Marker, ...], start: Path, mode: Mode) -> None:
         names = ", ".join(marker.name for marker in markers)
         joiner = "all of" if mode == "all" else "any of"
-        super().__init__(f"no directory from {start} upward contains {joiner}: {names}")
+        where = os.path.abspath(start)
+        super().__init__(f"no directory from {where} upward contains {joiner}: {names}")
         self.markers = markers
         self.start = start
         self.mode = mode
+
+    def __reduce__(
+        self,
+    ) -> tuple[type[MarkerNotFoundError], tuple[tuple[Marker, ...], Path, Mode]]:
+        return (type(self), (self.markers, self.start, self.mode))
