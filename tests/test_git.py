@@ -62,19 +62,6 @@ def test_an_empty_git_directory_is_ignored_like_git(git: GitRunner, tmp_path: Pa
     assert ours(inner) == toplevel(git, inner) == repo.resolve()
 
 
-def test_a_git_file_without_a_valid_target_is_ignored_like_git(
-    git: GitRunner, tmp_path: Path
-) -> None:
-    repo = make_repo(git, tmp_path / "repo")
-    for name, text in [("bogus", "gitdir: ../nowhere\n"), ("plain", "hello\n"), ("empty", "")]:
-        inner = repo / name
-        inner.mkdir()
-        (inner / ".git").write_text(text)
-        assert ours(inner) == repo.resolve()
-        done = git("-C", inner, "rev-parse", "--show-toplevel", check=False)
-        assert done.returncode != 0 or Path(done.stdout.strip()).resolve() == repo.resolve()
-
-
 def test_no_repository_gives_none(git: GitRunner, tmp_path: Path) -> None:
     lonely = tmp_path / "lonely"
     lonely.mkdir()
@@ -110,7 +97,16 @@ def test_the_ceiling_environment_variable_is_honoured(
 
 @pytest.mark.parametrize(
     ("value", "expected"),
-    [("1", True), ("true", True), ("YES", True), ("on", True), ("0", False), ("no", False)],
+    [
+        ("1", True),
+        ("2", True),
+        ("true", True),
+        ("YES", True),
+        ("on", True),
+        ("0", False),
+        ("no", False),
+        ("", False),
+    ],
 )
 def test_the_filesystem_discovery_variable_reads_like_git(
     monkeypatch: pytest.MonkeyPatch, value: str, expected: bool

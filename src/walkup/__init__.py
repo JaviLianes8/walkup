@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from walkup._core import find_up
-from walkup._git import git_root
+from walkup._git import git_root, iter_git_roots
 from walkup._presets import editorconfig_chain, node_root, python_root
 from walkup._search import find, find_all, iter_matches, require
 from walkup._types import (
@@ -36,6 +36,7 @@ __all__ = [
     "find_all",
     "find_up",
     "git_root",
+    "iter_git_roots",
     "iter_matches",
     "node_root",
     "python_root",

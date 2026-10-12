@@ -19,6 +19,7 @@ PUBLIC_API: list[str] = [
     "find_all",
     "find_up",
     "git_root",
+    "iter_git_roots",
     "iter_matches",
     "node_root",
     "python_root",
