@@ -55,7 +55,11 @@ def node_root(
     same_filesystem: bool = False,
     resolve: bool = True,
 ) -> Match | None:
-    """Return the nearest directory holding a ``package.json`` file, as npm does.
+    """Return the nearest directory holding a ``package.json`` file.
+
+    This is the project a ``package.json`` based tool would pick. npm's own prefix lookup
+    also stops at a ``node_modules`` directory; add ``Marker.dir("node_modules")`` to a
+    ``find`` call for that behaviour.
 
     Options behave as in ``walk_up``. Raises ``StartNotFoundError`` when ``start`` does
     not exist.
@@ -83,7 +87,9 @@ def editorconfig_chain(
     Following the EditorConfig specification, the search continues upward until it reads
     a file whose preamble (the lines before the first ``[section]``) sets
     ``root = true``; that file is the last one returned. Keys and values are compared
-    without regard to case, and ``#`` or ``;`` lines are comments. Options behave as in
+    without regard to case, and ``#`` or ``;`` lines are comments. Inline comments are not
+    recognised, as in the current specification, so ``root = true # x`` is not a root. A
+    file that cannot be read is still listed but is not a root. Options behave as in
     ``walk_up``. Raises ``StartNotFoundError`` when ``start`` does not exist.
     """
     chain: list[Path] = []

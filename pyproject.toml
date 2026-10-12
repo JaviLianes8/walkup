@@ -38,6 +38,9 @@ Changelog = "https://github.com/JaviLianes8/walkup/blob/main/CHANGELOG.md"
 LinkedIn = "https://www.linkedin.com/in/jlianes/"
 Funding = "https://buymeacoffee.com/jlianesglrs"
 
+[tool.hatch.build.targets.sdist]
+exclude = ["IMPROVEMENTS-round.md"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/walkup"]
 
@@ -49,6 +52,7 @@ target-version = "py310"
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 
 [tool.ruff.lint.isort]
+known-first-party = ["walkup"]
 known-local-folder = ["conftest"]
 
 [tool.mypy]

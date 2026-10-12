@@ -61,7 +61,7 @@ def test_the_chain_stops_at_the_first_root_file(tmp_path: Path) -> None:
     [
         ("ROOT = True\n", True),
         ("; comment\nroot=true\n", True),
-        ("﻿root = true\n", True),
+        (chr(0xFEFF) + "root = true\n", True),
         ("[*]\nroot = true\n", False),
         ("root = false\n", False),
         ("rooted = true\n", False),

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import os
 import subprocess
 import sys
@@ -11,6 +12,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
+_OFFLINE = ("NewConnectionError", "Could not find a version", "Name or service not known")
 
 
 def _bin(env_dir: Path, name: str) -> Path:
@@ -21,14 +23,15 @@ def _bin(env_dir: Path, name: str) -> Path:
 @pytest.fixture(scope="module")
 def installed(tmp_path_factory: pytest.TempPathFactory) -> Path:
     work = tmp_path_factory.mktemp("e2e")
-    built = subprocess.run(
-        [sys.executable, "-m", "pip", "wheel", "--no-deps", "-q", "-w", str(work), str(ROOT)],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    command = [sys.executable, "-m", "pip", "wheel", "--no-deps", "-q", "-w", str(work)]
+    if importlib.util.find_spec("hatchling") is not None:
+        command.append("--no-build-isolation")
+    built = subprocess.run([*command, str(ROOT)], capture_output=True, text=True, check=False)
     if built.returncode != 0:
-        pytest.fail(f"building the wheel failed:\n{built.stdout}\n{built.stderr}")
+        output = built.stdout + built.stderr
+        if any(sign in output for sign in _OFFLINE):
+            pytest.skip("the build backend could not be downloaded (offline)")
+        pytest.fail(f"building the wheel failed: {output}")
     wheels = list(work.glob("walkup-*.whl"))
     assert len(wheels) == 1, wheels
     env_dir = work / "venv"
