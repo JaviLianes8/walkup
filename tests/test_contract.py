@@ -4,7 +4,28 @@ import walkup
 
 # The public API. Add every exported name here as the library grows; this list is the
 # contract and the test below fails if the module and this list disagree.
-PUBLIC_API: list[str] = ["find_up", "walk_up"]
+PUBLIC_API: list[str] = [
+    "InvalidMarkerError",
+    "Kind",
+    "Marker",
+    "MarkerNotFoundError",
+    "Match",
+    "Mode",
+    "StartNotFoundError",
+    "WalkupError",
+    "WalkupPermissionError",
+    "editorconfig_chain",
+    "find",
+    "find_all",
+    "find_up",
+    "git_root",
+    "iter_git_roots",
+    "iter_matches",
+    "node_root",
+    "python_root",
+    "require",
+    "walk_up",
+]
 
 
 def test_all_lists_exactly_the_public_api() -> None:

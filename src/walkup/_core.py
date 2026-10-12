@@ -1,29 +1,13 @@
-"""Walk up a directory tree to locate a marker file or directory."""
+"""The original one-call lookup, kept stable on top of ``walk_up``."""
 
 from __future__ import annotations
 
 import os
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Literal
 
-Kind = Literal["any", "file", "dir"]
-
-
-def walk_up(start: str | os.PathLike[str] = ".") -> Iterator[Path]:
-    """Yield the start directory and each ancestor, ending at the filesystem root.
-
-    A file path starts the walk at its parent directory. Every yielded path is absolute.
-    """
-    current = Path(start).resolve()
-    if current.is_file():
-        current = current.parent
-    while True:
-        yield current
-        parent = current.parent
-        if parent == current:
-            return
-        current = parent
+from walkup._types import Kind
+from walkup._walk import walk_up
 
 
 def find_up(
@@ -38,6 +22,7 @@ def find_up(
     ``names`` is one name or several, tried in order within each directory before moving
     up. ``root``, when given, is the last directory searched. ``kind`` restricts matches
     to regular files (``"file"``) or directories (``"dir"``); the default accepts either.
+    For the matched marker, every match, ceilings or typed errors, see ``find``.
     """
     wanted: tuple[str, ...] = (names,) if isinstance(names, str) else tuple(names)
     boundary = Path(root).resolve() if root is not None else None

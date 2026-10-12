@@ -4,21 +4,28 @@ build-backend = "hatchling.build"
 
 [project]
 name = "walkup"
-version = "0.1.0"
+version = "0.2.0"
 description = "Walk up from a start directory to find a marker file or directory, typed and dependency free"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Javier Lianes", email = "javier@lianes8studio.com" }]
-keywords = []
+keywords = ["find-up", "project-root", "git", "marker", "directory", "cli", "editorconfig"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
+    "Environment :: Console",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: System :: Filesystems",
     "Typing :: Typed",
 ]
 dependencies = []
+
+[project.scripts]
+walkup = "walkup._cli:main"
 
 [project.optional-dependencies]
 dev = ["ruff", "mypy", "pytest", "build", "twine"]
@@ -31,6 +38,9 @@ Changelog = "https://github.com/JaviLianes8/walkup/blob/main/CHANGELOG.md"
 LinkedIn = "https://www.linkedin.com/in/jlianes/"
 Funding = "https://buymeacoffee.com/jlianesglrs"
 
+[tool.hatch.build.targets.sdist]
+exclude = ["IMPROVEMENTS-round.md"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/walkup"]
 
@@ -40,6 +50,10 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["walkup"]
+known-local-folder = ["conftest"]
 
 [tool.mypy]
 python_version = "3.10"
