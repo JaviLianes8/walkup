@@ -25,6 +25,7 @@ class InvalidMarkerError(WalkupError, ValueError):
 class StartNotFoundError(WalkupError, FileNotFoundError):
     """The start path does not exist, so there is nothing to walk up from.
 
+    >>> from pathlib import Path
     >>> error = StartNotFoundError(Path("missing"))
     >>> error.start == Path("missing") and isinstance(error, FileNotFoundError)
     True
@@ -44,6 +45,7 @@ class StartNotFoundError(WalkupError, FileNotFoundError):
 class WalkupPermissionError(WalkupError, PermissionError):
     """A candidate could not be inspected and ``on_error="raise"`` was requested.
 
+    >>> from pathlib import Path
     >>> error = WalkupPermissionError(Path("private"))
     >>> error.path == Path("private") and isinstance(error, PermissionError)
     True

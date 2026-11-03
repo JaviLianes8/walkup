@@ -19,7 +19,7 @@ import walkup
 def test_docstrings_run(module: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(tmp_path)
     imported = importlib.import_module(module if module == "walkup" else f"walkup.{module}")
-    result = doctest.testmod(imported, globs=vars(imported) | {"Path": Path})
+    result = doctest.testmod(imported)
     assert result.failed == 0
     # Re-exported classes belong to walkup so their examples run in that module.
     if module not in ("_types", "_errors"):
@@ -38,7 +38,12 @@ def test_every_public_callable_and_property_has_an_example() -> None:
         (walkup.Match, ("marker", "path", "names")),
     ):
         for name in names:
-            assert ">>>" in (inspect.getdoc(getattr(owner, name)) or "")
+            doc = inspect.getdoc(getattr(owner, name)) or ""
+            assert ">>>" in doc
+            example = doctest.DocTestParser().get_doctest(
+                doc, vars(walkup).copy(), f"{owner.__name__}.{name}", None, 0
+            )
+            assert doctest.DocTestRunner().run(example).failed == 0
 
 
 @pytest.mark.parametrize("name", ["README.md", "GUIDE.md"])

@@ -122,7 +122,7 @@ def editorconfig_chain(
 def declares_root(path: Path) -> bool:
     """Return whether an ``.editorconfig`` preamble contains ``root = true``."""
     try:
-        text = path.read_text(encoding="utf-8-sig", errors="replace")
+        text = path.read_bytes().decode("utf-8-sig", errors="replace")
     except OSError:
         return False
     root = False

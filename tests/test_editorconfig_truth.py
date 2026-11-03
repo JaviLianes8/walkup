@@ -47,7 +47,9 @@ def test_reference_parser_agrees(tmp_path: Path, preamble: str, root: bool) -> N
     assert parser.root_file is root
 
 
-@pytest.mark.parametrize("suffix", ["# comment", "; comment", "\vroot=true", "\x85root=true"])
+@pytest.mark.parametrize(
+    "suffix", ["# comment", "; comment", "\rroot=true", "\vroot=true", "\x85root=true"]
+)
 def test_inline_comments_and_non_lf_separators_are_not_root(tmp_path: Path, suffix: str) -> None:
     outer = tmp_path / ".editorconfig"
     outer.write_text("root=true\n", encoding="utf-8")

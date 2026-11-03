@@ -96,6 +96,7 @@ class Match:
     were requested, and ``paths`` holds the matching path for each one. ``marker`` and
     ``path`` are shortcuts for the first entry.
 
+    >>> from pathlib import Path
     >>> match = Match(Path("."), (Marker("cfg"),), (Path("cfg"),))
     >>> match.names, match.path == Path("cfg")
     (('cfg',), True)
@@ -109,6 +110,7 @@ class Match:
     def marker(self) -> Marker:
         """The first requested marker present in ``directory``.
 
+        >>> from pathlib import Path
         >>> Match(Path("."), (Marker("cfg"),), (Path("cfg"),)).marker.name
         'cfg'
         """
@@ -118,6 +120,7 @@ class Match:
     def path(self) -> Path:
         """The path of the first requested marker present in ``directory``.
 
+        >>> from pathlib import Path
         >>> Match(Path("."), (Marker("cfg"),), (Path("cfg"),)).path == Path("cfg")
         True
         """
@@ -127,6 +130,7 @@ class Match:
     def names(self) -> tuple[str, ...]:
         """The names of the markers present in ``directory``.
 
+        >>> from pathlib import Path
         >>> Match(Path("."), (Marker("cfg"),), (Path("cfg"),)).names
         ('cfg',)
         """
@@ -136,6 +140,7 @@ class Match:
 class MarkerNotFoundError(WalkupError, LookupError):
     """No directory on the walk satisfied the search passed to ``require``.
 
+    >>> from pathlib import Path
     >>> from walkup import Marker
     >>> error = MarkerNotFoundError((Marker("config"),), Path("."), "any")
     >>> error.mode, error.markers[0].name

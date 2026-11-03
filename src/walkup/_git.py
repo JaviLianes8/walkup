@@ -40,7 +40,7 @@ def is_git_directory(path: Path) -> bool:
             raw = (path / "commondir").read_text(encoding="utf-8", errors="replace")
             common = path / raw.rstrip("\r\n")
         return (common / "objects").is_dir() and (common / "refs").is_dir()
-    except OSError:
+    except (OSError, ValueError):
         return False
 
 

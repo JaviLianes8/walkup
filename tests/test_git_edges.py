@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import random
 from pathlib import Path
 
 import pytest
@@ -103,3 +104,17 @@ def test_iter_git_roots_lists_submodule_then_superproject(git: GitRunner, tmp_pa
     roots = [m.directory for m in iter_git_roots(repo / "m" / "lib")]
     assert roots[:2] == [(repo / "m" / "lib").resolve(), repo.resolve()]
     assert list(iter_git_roots(repo, ceilings=[tmp_path])) == [git_root(repo)]
+
+
+def test_nul_in_a_gitfile_is_invalid_without_a_parser_crash(tmp_path: Path) -> None:
+    (tmp_path / ".git").write_bytes(b"gitdir: bad\x00path\n")
+    assert git_root(tmp_path, ceilings=[tmp_path.parent]) is None
+
+
+def test_seeded_invalid_gitfiles_do_not_crash(tmp_path: Path) -> None:
+    rng = random.Random(20261103)
+    path = tmp_path / ".git"
+    for _ in range(500):
+        suffix = bytes(rng.choices(b"abc \n\r\x00\xff", k=rng.randrange(100)))
+        path.write_bytes(b"gitdir: nonexistent-" + suffix)
+        assert git_root(tmp_path, ceilings=[tmp_path.parent]) is None

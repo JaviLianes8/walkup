@@ -19,6 +19,7 @@ All notable changes to this project are documented here. The format follows
   preamble lines; a section must have both opening and closing brackets. Inline comments
   remain part of values. The optional UTF-8 BOM remains accepted.
 - A closed CLI output pipe returns failure instead of propagating `BrokenPipeError`.
+- Malformed gitfiles containing NUL are ignored as invalid instead of raising `ValueError`.
 - Public classes now pickle by their `walkup` names; old private import paths remain
   available for existing pickles. Public annotations resolve at runtime.
 - Remove the incidental `annotations` attribute from the package namespace.

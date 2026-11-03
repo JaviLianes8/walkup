@@ -189,19 +189,12 @@ pkg = find("package.json", ceilings=[repo.directory.parent] if repo else ())
 root = require(Marker.dir(".git"), "pyproject.toml", mode="all").directory
 ```
 
-```sh
-# Run a command from the repository root.
-root=$(walkup --preset git) && cd "$root" && make test
-```
-
 ## Compatibility
 
 `Kind` is `Literal["any", "file", "dir"]`; `Mode` is `Literal["any", "all"]`.
 `find_up` retains its original permissive contract: an empty names iterable returns
 `None`, names can be arbitrary paths, and a missing start is walked lexically upward
 after normalization. New code should prefer `find` for marker validation. Searches are
-not a sandbox: relative markers may contain `..`, and filesystem contents may change
-between probes. Duplicate requested markers are retained in request order.
+not a sandbox: relative markers may contain `..`, and filesystem contents may change between probes. Duplicate requested markers are retained in request order.
 
-The 1.0.0 changes to diagnostics, validation, EditorConfig preambles and pickling are
-listed in the [CHANGELOG](https://github.com/JaviLianes8/walkup/blob/main/CHANGELOG.md).
+See the [CHANGELOG](https://github.com/JaviLianes8/walkup/blob/main/CHANGELOG.md) for 1.0.0 changes.
