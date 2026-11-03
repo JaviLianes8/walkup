@@ -17,11 +17,11 @@ def walk_up(
     same_filesystem: bool = False,
     resolve: bool = True,
 ) -> Iterator[Path]:
-    """Yield the start directory and each ancestor, nearest first.
+    r"""Yield the start directory and each ancestor, nearest first.
 
     A path that exists but is not a directory (a file, a device) starts the walk at its
     parent directory, and every yielded path is absolute. With no options the walk ends
-    at the filesystem root (``/``, ``C:\\`` or the share root of a UNC path).
+    at the filesystem root (``/``, ``C:\`` or the share root of a UNC path).
 
     ``ceilings`` follows git's ``GIT_CEILING_DIRECTORIES``: the walk never enters a
     ceiling or anything above it. A ceiling only applies when it is a proper ancestor of
@@ -42,6 +42,9 @@ def walk_up(
     path: the start is made absolute and normalised, ``..`` is collapsed textually, and
     symlinked components stay in place, as ``pwd -L`` does. Ceilings and ``stop_at`` are
     normalised with the same policy before they are compared.
+
+    >>> next(walk_up(".")) == Path.cwd()
+    True
     """
     origin = _normalise(start, resolve)
     if origin.exists() and not origin.is_dir():

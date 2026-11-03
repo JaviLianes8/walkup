@@ -23,6 +23,22 @@ def _bin(env_dir: Path, name: str) -> Path:
 @pytest.fixture(scope="module")
 def installed(tmp_path_factory: pytest.TempPathFactory) -> Path:
     work = tmp_path_factory.mktemp("e2e")
+    supplied = os.environ.get("WALKUP_WHEEL")
+    wheel = Path(supplied) if supplied else _build(work)
+    assert wheel.is_file()
+    env_dir = work / "venv"
+    venv.create(env_dir, with_pip=True)
+    python = _bin(env_dir, "python")
+    subprocess.run(
+        [str(python), "-m", "pip", "install", "-q", "--no-index", str(wheel)],
+        check=True,
+        capture_output=True,
+        timeout=120,
+    )
+    return env_dir
+
+
+def _build(work: Path) -> Path:
     command = [sys.executable, "-m", "pip", "wheel", "--no-deps", "-q", "-w", str(work)]
     if importlib.util.find_spec("hatchling") is not None:
         command.append("--no-build-isolation")
@@ -34,15 +50,7 @@ def installed(tmp_path_factory: pytest.TempPathFactory) -> Path:
         pytest.fail(f"building the wheel failed: {output}")
     wheels = list(work.glob("walkup-*.whl"))
     assert len(wheels) == 1, wheels
-    env_dir = work / "venv"
-    venv.create(env_dir, with_pip=True)
-    python = _bin(env_dir, "python")
-    subprocess.run(
-        [str(python), "-m", "pip", "install", "-q", "--no-index", str(wheels[0])],
-        check=True,
-        capture_output=True,
-    )
-    return env_dir
+    return wheels[0]
 
 
 def _walkup(env_dir: Path, *args: str | Path, cwd: Path) -> subprocess.CompletedProcess[str]:
@@ -91,3 +99,34 @@ def test_the_installed_package_is_typed(installed: Path, tmp_path: Path) -> None
     )
     done = subprocess.run([str(python), "-c", code], capture_output=True, text=True, cwd=tmp_path)
     assert done.stdout.strip() == "True"
+
+
+def test_installed_module_and_external_consumer(installed: Path, tmp_path: Path) -> None:
+    (tmp_path / "pyproject.toml").touch()
+    python = _bin(installed, "python")
+    code = """
+from pathlib import Path
+from walkup import Marker, find_all, find_up, python_root, require, walk_up
+root = Path.cwd()
+assert require(Marker.file('pyproject.toml'), stop_at=root).directory == root
+assert find_up('pyproject.toml') == root / 'pyproject.toml'
+assert python_root().names == ('pyproject.toml',)
+assert len(find_all('pyproject.toml', stop_at=root)) == 1
+assert next(walk_up()) == root
+"""
+    done = subprocess.run(
+        [str(python), "-I", "-c", code], cwd=tmp_path, capture_output=True, text=True, timeout=60
+    )
+    assert done.returncode == 0, done.stderr
+    done = subprocess.run(
+        [str(python), "-I", "-m", "walkup", "--path", "pyproject.toml"],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert (done.returncode, done.stdout.strip(), done.stderr) == (
+        0,
+        str(tmp_path / "pyproject.toml"),
+        "",
+    )

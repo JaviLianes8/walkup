@@ -23,6 +23,9 @@ def find_up(
     up. ``root``, when given, is the last directory searched. ``kind`` restricts matches
     to regular files (``"file"``) or directories (``"dir"``); the default accepts either.
     For the matched marker, every match, ceilings or typed errors, see ``find``.
+
+    >>> find_up(".") == Path.cwd()
+    True
     """
     wanted: tuple[str, ...] = (names,) if isinstance(names, str) else tuple(names)
     boundary = Path(root).resolve() if root is not None else None

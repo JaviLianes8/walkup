@@ -1,5 +1,7 @@
 # walkup
 
+[![Lianes8 Certified](https://lianes8studio.com/certified/lianes8-certified-badge.svg)](https://lianes8studio.com/certified)
+
 Walk up from a start directory to find a marker file or directory, typed and dependency free.
 
 ## Install
@@ -60,7 +62,7 @@ Errors go to stderr with exit status 1. `walkup --help` lists every option.
 - `find`, `find_all`, `iter_matches`, `require`: one marker or several, any-of or
   all-of, returning a typed `Match` that names the directory and the markers present.
 - `Marker`: a name plus a kind (`"any"`, `"file"`, `"dir"`) and an optional content check.
-- Walk options shared by every function: git style `ceilings`, an inclusive `stop_at`,
+- Walk options for the general searches and Python/Node/EditorConfig presets: git style `ceilings`, an inclusive `stop_at`,
   `same_filesystem`, and `resolve` to choose physical or lexical symlink handling.
 - Presets: `git_root` and `iter_git_roots` (discovery step by step like git, honouring
   `GIT_CEILING_DIRECTORIES` and `GIT_DISCOVERY_ACROSS_FILESYSTEM`), `python_root`,
@@ -69,19 +71,32 @@ Errors go to stderr with exit status 1. `walkup --help` lists every option.
   (`LookupError`), `StartNotFoundError` (`FileNotFoundError`), `InvalidMarkerError`
   (`ValueError`), `WalkupPermissionError` (`PermissionError`), all under `WalkupError`.
 
-See [GUIDE.md](GUIDE.md) for every option, the exact ceiling and symlink rules, and recipes.
+See [GUIDE](https://github.com/JaviLianes8/walkup/blob/main/GUIDE.md) for every option, the exact ceiling and symlink rules, and recipes.
 
 ## Why
 
-JavaScript has [find-up](https://www.npmjs.com/package/find-up) for locating a config or a
-project root, but Python has no clean, typed peer. The nearest package on PyPI stopped at a
-single release in 2014, pattern based and untyped. `walkup` is a small, modern take: full
-type hints, `py.typed`, no runtime dependencies, presets checked against the real tools,
-and a command line tool for shell scripts.
+For a one-off search, a loop over `pathlib.Path.parents` is often enough. `walkup`
+adds ordered markers, file/directory filters, inclusive boundaries, ceilings, typed
+results and a CLI. Use Git itself when you need its complete repository configuration
+and ownership policy: the Git preset only implements the discovery subset described in
+the [GUIDE](https://github.com/JaviLianes8/walkup/blob/main/GUIDE.md).
+Use an [EditorConfig core](https://editorconfig.org/) to resolve settings for a file;
+`editorconfig_chain` only finds the enclosing configuration files. Runtime dependencies: none.
+
+## Development
+
+Install `walkup[dev]`, then run `ruff format --check .`, `ruff check .`,
+`mypy --strict src tests` and `pytest --basetemp=<scratch-directory>`.
+Tests use a 300-second per-test timeout. Git tests invoke a real local Git installation.
+To check the pinned specification, run `python scripts/fetch_upstream.py <scratch-directory>`
+and set `WALKUP_TRUTH` to that directory. Installing `editorconfig==0.17.1` enables the
+optional reference-parser tests. Both sets skip cleanly when unavailable.
+The [CHANGELOG](https://github.com/JaviLianes8/walkup/blob/main/CHANGELOG.md) lists the
+1.0.0 behavior changes.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](https://github.com/JaviLianes8/walkup/blob/main/LICENSE).
 
 ## Links
 

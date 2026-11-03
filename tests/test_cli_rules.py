@@ -32,16 +32,16 @@ def test_flags_a_preset_cannot_honour_are_rejected(
         main(argv)
     assert info.value.code == 1
     err = capsys.readouterr().err
-    assert "does not apply to --preset" in err
+    assert "invalid arguments; see --help" in err
 
 
 def test_missing_arguments_get_a_precise_message(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit):
         main([])
-    assert "give one or more MARKER names, or --preset" in capsys.readouterr().err
+    assert "invalid arguments; see --help" in capsys.readouterr().err
     with pytest.raises(SystemExit):
         main(["--preset", "git", "x"])
-    assert "cannot be combined" in capsys.readouterr().err
+    assert "invalid arguments; see --help" in capsys.readouterr().err
 
 
 def _run(start: Path, **env: str) -> subprocess.CompletedProcess[bytes]:
@@ -76,3 +76,21 @@ def test_undecodable_posix_names_round_trip(tmp_path: Path) -> None:
     done = _run(Path(os.fsdecode(raw)), PYTHONIOENCODING="utf-8")
     assert done.returncode == 0
     assert done.stdout.strip() == os.fsencode(Path(os.fsdecode(raw)).resolve())
+
+
+@pytest.mark.parametrize("args", [["."], ["--help"], ["--version"]])
+def test_a_closed_output_pipe_exits_one_without_a_traceback(
+    tmp_path: Path, args: list[str]
+) -> None:
+    env = {**os.environ, "PYTHONPATH": str(SRC)}
+    with subprocess.Popen(
+        [sys.executable, "-m", "walkup", "--start", str(tmp_path), *args],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    ) as process:
+        assert process.stdout is not None and process.stderr is not None
+        process.stdout.close()
+        stderr = process.stderr.read()
+        assert process.wait(timeout=60) == 1
+        assert stderr == b""

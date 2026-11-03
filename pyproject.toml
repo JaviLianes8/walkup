@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "walkup"
-version = "0.2.0"
+version = "1.0.0"
 description = "Walk up from a start directory to find a marker file or directory, typed and dependency free"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -13,11 +13,16 @@ license-files = ["LICENSE"]
 authors = [{ name = "Javier Lianes", email = "javier@lianes8studio.com" }]
 keywords = ["find-up", "project-root", "git", "marker", "directory", "cli", "editorconfig"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Environment :: Console",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Libraries",
     "Topic :: System :: Filesystems",
     "Typing :: Typed",
@@ -28,18 +33,18 @@ dependencies = []
 walkup = "walkup._cli:main"
 
 [project.optional-dependencies]
-dev = ["ruff", "mypy", "pytest", "build", "twine"]
+dev = ["ruff", "mypy", "pytest", "pytest-timeout", "build", "twine"]
 
 [project.urls]
 Homepage = "https://lianes8studio.com"
-Repository = "https://github.com/JaviLianes8/walkup"
+Source = "https://github.com/JaviLianes8/walkup"
 Issues = "https://github.com/JaviLianes8/walkup/issues"
 Changelog = "https://github.com/JaviLianes8/walkup/blob/main/CHANGELOG.md"
 LinkedIn = "https://www.linkedin.com/in/jlianes/"
 Funding = "https://buymeacoffee.com/jlianesglrs"
 
 [tool.hatch.build.targets.sdist]
-exclude = ["IMPROVEMENTS-round.md"]
+include = ["/src", "/tests", "/README.md", "/GUIDE.md", "/CHANGELOG.md", "/LICENSE", "/pyproject.toml", "/GROUND-TRUTH.json", "/scripts/fetch_upstream.py"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/walkup"]
@@ -63,3 +68,4 @@ strict = true
 testpaths = ["tests"]
 pythonpath = ["src"]
 addopts = "-q"
+timeout = 300

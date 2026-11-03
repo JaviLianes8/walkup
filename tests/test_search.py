@@ -83,7 +83,7 @@ def test_require_returns_or_raises_a_lookup_error(tree: Path) -> None:
     assert isinstance(info.value, LookupError) and isinstance(info.value, WalkupError)
     assert info.value.mode == "all" and info.value.start == tree
     assert [m.name for m in info.value.markers] == ["a.zz", "b.zz"]
-    assert "all of: a.zz, b.zz" in str(info.value)
+    assert "all of the requested markers" in str(info.value)
 
 
 def test_a_missing_start_is_a_file_not_found_error(tmp_path: Path) -> None:
@@ -153,7 +153,8 @@ def test_errors_survive_pickling(tmp_path: Path) -> None:
         assert type(copy) is type(error) and str(copy) == str(error)
 
 
-def test_the_not_found_message_names_the_absolute_start(tmp_path: Path) -> None:
+def test_the_not_found_error_keeps_the_start_out_of_the_message(tmp_path: Path) -> None:
     with pytest.raises(MarkerNotFoundError) as info:
         require("nothing.zz", start=".", stop_at=".")
-    assert str(Path.cwd()) in str(info.value)
+    assert info.value.start == Path(".")
+    assert str(Path.cwd()) not in str(info.value)

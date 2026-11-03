@@ -153,6 +153,7 @@ def test_same_filesystem_stops_before_another_device(tmp_path: Path) -> None:
         shutil.rmtree(remote, ignore_errors=True)
 
 
-@pytest.mark.skipif(IS_WINDOWS, reason="device files live under /dev on POSIX only")
-def test_a_device_start_begins_at_its_parent() -> None:
-    assert next(walk_up(os.devnull)) == Path(os.devnull).resolve().parent
+def test_a_non_directory_start_begins_at_its_parent(tmp_path: Path) -> None:
+    path = tmp_path / "ordinary.txt"
+    path.touch()
+    assert next(walk_up(path)) == tmp_path.resolve()

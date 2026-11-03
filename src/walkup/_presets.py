@@ -36,6 +36,10 @@ def python_root(
     The nearest configuration file wins, the way formatters and linters stop at the first
     one they meet; ``match.names`` tells which of the three files are present. Options
     behave as in ``walk_up``. Raises ``StartNotFoundError`` when ``start`` does not exist.
+
+    >>> match = python_root(".", stop_at=".")
+    >>> match is None or match.path.is_file()
+    True
     """
     return find(
         *PYTHON_MARKERS,
@@ -63,6 +67,10 @@ def node_root(
 
     Options behave as in ``walk_up``. Raises ``StartNotFoundError`` when ``start`` does
     not exist.
+
+    >>> match = node_root(".", stop_at=".")
+    >>> match is None or match.names == ("package.json",)
+    True
     """
     return find(
         *NODE_MARKERS,
@@ -88,9 +96,12 @@ def editorconfig_chain(
     a file whose preamble (the lines before the first ``[section]``) sets
     ``root = true``; that file is the last one returned. Keys and values are compared
     without regard to case, and ``#`` or ``;`` lines are comments. Inline comments are not
-    recognised, as in the current specification, so ``root = true # x`` is not a root. A
-    file that cannot be read is still listed but is not a root. Options behave as in
+    recognised, so ``root = true # x`` is not a root. The last root assignment wins.
+    A file that cannot be read is still listed but is not a root. Options behave as in
     ``walk_up``. Raises ``StartNotFoundError`` when ``start`` does not exist.
+
+    >>> all(p.name == ".editorconfig" for p in editorconfig_chain(".", stop_at="."))
+    True
     """
     chain: list[Path] = []
     found = iter_matches(
@@ -111,16 +122,17 @@ def editorconfig_chain(
 def declares_root(path: Path) -> bool:
     """Return whether an ``.editorconfig`` preamble contains ``root = true``."""
     try:
-        text = path.read_text(encoding="utf-8-sig", errors="replace")
+        text = path.read_bytes().decode("utf-8-sig", errors="replace")
     except OSError:
         return False
-    for raw in text.splitlines():
+    root = False
+    for raw in text.split("\n"):
         line = raw.strip()
         if not line or line[0] in "#;":
             continue
-        if line.startswith("["):
-            return False
+        if line.startswith("[") and line.endswith("]"):
+            return root
         key, sep, value = line.partition("=")
-        if sep and key.strip().lower() == "root" and value.strip().lower() == "true":
-            return True
-    return False
+        if sep and key.strip().lower() == "root":
+            root = value.strip().lower() == "true"
+    return root

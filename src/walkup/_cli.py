@@ -7,7 +7,8 @@ import io
 import os
 import sys
 from collections.abc import Iterator, Sequence
-from typing import NoReturn
+from contextlib import suppress
+from typing import NoReturn, Protocol
 
 from walkup import __version__
 from walkup._git import env_ceilings, iter_git_roots
@@ -33,10 +34,21 @@ exit status: 0 when something matched, 1 when nothing matched or on an error.
 PRESETS = ("git", "python", "node", "editorconfig")
 
 
+class _Writer(Protocol):
+    def write(self, value: str, /) -> object: ...
+
+
 class _Parser(argparse.ArgumentParser):
     def error(self, message: str) -> NoReturn:
         self.print_usage(sys.stderr)
-        self.exit(1, f"{self.prog}: error: {message}\n")
+        self.exit(1, "walkup: error: invalid arguments; see --help\n")
+
+    def _print_message(self, message: str, file: _Writer | None = None) -> None:
+        if file is sys.stdout:
+            if message and not _emit(message):
+                self.exit(1)
+        else:
+            super()._print_message(message, file)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -80,8 +92,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     _validate(parser, args)
     try:
         lines = list(_lines(args))
-    except (WalkupError, OSError) as exc:
+    except WalkupError as exc:
         print(f"walkup: error: {exc}", file=sys.stderr)
+        return 1
+    except (OSError, ValueError, RuntimeError):
+        print("walkup: error: cannot inspect the requested path", file=sys.stderr)
         return 1
     if lines and not _emit("".join(line + "\n" for line in lines)):
         return 1
@@ -106,6 +121,12 @@ def _emit(text: str) -> bool:
     try:
         out.write(text)
         out.flush()
+    except OSError:
+        # Windows can report EINVAL for a closed pipe. Close even when flushing fails
+        # so interpreter shutdown cannot retry the same buffered output.
+        with suppress(OSError):
+            out.close()
+        return False
     except UnicodeEncodeError:
         encoding = getattr(out, "encoding", None) or "unknown"
         print(
