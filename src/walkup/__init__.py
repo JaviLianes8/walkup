@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import get_type_hints as _get_type_hints
+
 from walkup._core import find_up
 from walkup._git import git_root, iter_git_roots
 from walkup._presets import editorconfig_chain, node_root, python_root
@@ -19,7 +21,7 @@ from walkup._types import (
 )
 from walkup._walk import walk_up
 
-__version__ = "0.2.0"
+__version__ = "1.0.0"
 
 __all__ = [
     "InvalidMarkerError",
@@ -43,3 +45,24 @@ __all__ = [
     "require",
     "walk_up",
 ]
+
+# Literal aliases use module doctests because their runtime objects belong to typing.
+__test__ = {
+    "Kind": ">>> from typing import get_args\n>>> get_args(Kind)\n('any', 'file', 'dir')",
+    "Mode": ">>> from typing import get_args\n>>> get_args(Mode)\n('any', 'all')",
+}
+
+for _value in (
+    Marker,
+    Match,
+    WalkupError,
+    InvalidMarkerError,
+    StartNotFoundError,
+    MarkerNotFoundError,
+    WalkupPermissionError,
+):
+    _value.__annotations__ = _get_type_hints(_value)
+    _value.__module__ = __name__
+del _value
+del _get_type_hints
+globals().pop("annotations", None)

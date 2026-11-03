@@ -36,7 +36,7 @@ PRESETS = ("git", "python", "node", "editorconfig")
 class _Parser(argparse.ArgumentParser):
     def error(self, message: str) -> NoReturn:
         self.print_usage(sys.stderr)
-        self.exit(1, f"{self.prog}: error: {message}\n")
+        self.exit(1, "walkup: error: invalid arguments; see --help\n")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -80,8 +80,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     _validate(parser, args)
     try:
         lines = list(_lines(args))
-    except (WalkupError, OSError) as exc:
+    except WalkupError as exc:
         print(f"walkup: error: {exc}", file=sys.stderr)
+        return 1
+    except (OSError, ValueError, RuntimeError):
+        print("walkup: error: cannot inspect the requested path", file=sys.stderr)
         return 1
     if lines and not _emit("".join(line + "\n" for line in lines)):
         return 1
@@ -106,6 +109,8 @@ def _emit(text: str) -> bool:
     try:
         out.write(text)
         out.flush()
+    except BrokenPipeError:
+        return False
     except UnicodeEncodeError:
         encoding = getattr(out, "encoding", None) or "unknown"
         print(

@@ -9,7 +9,7 @@ at `/`, at a drive root such as `C:\`, or at the share root of a UNC path such a
 
 `walk_up(start=".", *, ceilings=(), stop_at=None, same_filesystem=False, resolve=True)`
 yields those directories. The searches and the Python, Node and EditorConfig presets
-accept the same four options; the git presets take only `ceilings` (see below).
+accept the same four options; the git presets take `ceilings` and `across_filesystems` (see below).
 
 ### Ceilings and stop_at
 
@@ -24,6 +24,8 @@ accept the same four options; the git presets take only `ceilings` (see below).
 when it is not on the walk. `find_up(..., root=...)` uses the same inclusive rule.
 
 ```python
+from walkup import walk_up
+
 walk_up("/w/a/b/c", ceilings=["/w/a"])  # /w/a/b/c, /w/a/b
 walk_up("/w/a/b/c", stop_at="/w/a")  # /w/a/b/c, /w/a/b, /w/a
 ```
@@ -44,6 +46,8 @@ text, and linked directories stay in place, like `pwd -L`. Ceilings and `stop_at
 normalised with the same policy.
 
 ```python
+from walkup import walk_up
+
 # /work/link -> /data/real
 walk_up("/work/link")  # /data/real, /data, /
 walk_up("/work/link", resolve=False)  # /work/link, /work, /
@@ -61,6 +65,8 @@ A plain string is `Marker(name)`. A `Marker` has:
   `True` to accept. Use it to look inside a file.
 
 ```python
+from walkup import Marker
+
 tox = Marker.file("tox.ini", lambda path: "[tox]" in path.read_text())
 ```
 
@@ -114,8 +120,11 @@ inspected, including inside a `check`, as absent. `on_error="raise"` raises
   npm also stops at `node_modules`; add `Marker.dir("node_modules")` to a `find` call for that.
 - `editorconfig_chain(start=".", ...)` returns the `.editorconfig` files that apply,
   nearest first, ending at the first file whose preamble (before any `[section]`) sets
-  `root = true`, compared without regard to case. Inline comments are not recognised, as
-  in the current specification; an unreadable file is listed but is not a root.
+  `root = true`, compared without regard to case. The last preamble `root` assignment wins. Inline comments are part of values;
+  only LF/CRLF separate lines and a section has both opening and closing brackets.
+  A UTF-8 BOM is accepted. An unreadable file is listed but is not a root.
+  This finder accepts an existing directory or file, does not resolve section globs or
+  settings, and is not a complete EditorConfig core.
 
 ## Errors
 
@@ -126,7 +135,16 @@ inspected, including inside a `check`, as absent. `on_error="raise"` raises
 | `MarkerNotFoundError` | `LookupError` | `require` found nothing (`.markers`, `.start`, `.mode`) |
 | `WalkupPermissionError` | `PermissionError` | `on_error="raise"` and a candidate is unreadable (`.path`) |
 
-All of them subclass `WalkupError`.
+All of them subclass `WalkupError`. Invalid `mode` or `on_error` also raises
+`InvalidMarkerError`; a non-callable `Marker.check` is rejected at construction.
+Messages never include paths or marker text. Read the attributes explicitly when you
+need those values. Builtin `TypeError` is possible for wrong path argument types;
+filesystem normalization can raise `OSError`, `ValueError` or `RuntimeError` (for example,
+a symlink loop on older Python). Callback exceptions other than `OSError` propagate.
+
+`Match` is a frozen value container. When constructing one yourself, supply a nonempty
+`markers` tuple and a corresponding `paths` tuple; its first-entry shortcuts otherwise
+raise `IndexError`. Results returned by the searches always satisfy this invariant.
 
 ## Command line
 
@@ -158,6 +176,8 @@ goes to stderr). `python -m walkup` runs the same tool.
 ## Recipes
 
 ```python
+from walkup import Marker, find, git_root, python_root, require
+
 # Load settings from the project that owns this module.
 here = python_root(__file__)
 
@@ -173,3 +193,15 @@ root = require(Marker.dir(".git"), "pyproject.toml", mode="all").directory
 # Run a command from the repository root.
 root=$(walkup --preset git) && cd "$root" && make test
 ```
+
+## Compatibility
+
+`Kind` is `Literal["any", "file", "dir"]`; `Mode` is `Literal["any", "all"]`.
+`find_up` retains its original permissive contract: an empty names iterable returns
+`None`, names can be arbitrary paths, and a missing start is walked lexically upward
+after normalization. New code should prefer `find` for marker validation. Searches are
+not a sandbox: relative markers may contain `..`, and filesystem contents may change
+between probes. Duplicate requested markers are retained in request order.
+
+The 1.0.0 changes to diagnostics, validation, EditorConfig preambles and pickling are
+listed in the [CHANGELOG](https://github.com/JaviLianes8/walkup/blob/main/CHANGELOG.md).

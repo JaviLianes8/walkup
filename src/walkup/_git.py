@@ -7,7 +7,7 @@ import re
 from collections.abc import Iterable, Iterator
 from pathlib import Path
 
-from walkup._search import probe_start
+from walkup._probe import probe_start
 from walkup._types import Marker, Match
 from walkup._walk import StrPath, walk_up
 
@@ -116,6 +116,10 @@ def git_root(
     boundary. ``GIT_DIR``, ``GIT_WORK_TREE``, ``core.worktree`` and git's
     ``safe.directory`` ownership check are not consulted. Raises ``StartNotFoundError``
     when ``start`` does not exist.
+
+    >>> match = git_root(".")
+    >>> match is None or match.directory.is_absolute()
+    True
     """
     return next(
         iter_git_roots(start, ceilings=ceilings, across_filesystems=across_filesystems), None
@@ -132,6 +136,9 @@ def iter_git_roots(
 
     Each step follows ``git_root``; the walk ends where git discovery would stop with an
     error or without a working tree.
+
+    >>> all(m.directory.is_absolute() for m in iter_git_roots("."))
+    True
     """
     probe_start(start)
     if ceilings is None:

@@ -32,16 +32,16 @@ def test_flags_a_preset_cannot_honour_are_rejected(
         main(argv)
     assert info.value.code == 1
     err = capsys.readouterr().err
-    assert "does not apply to --preset" in err
+    assert "invalid arguments; see --help" in err
 
 
 def test_missing_arguments_get_a_precise_message(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit):
         main([])
-    assert "give one or more MARKER names, or --preset" in capsys.readouterr().err
+    assert "invalid arguments; see --help" in capsys.readouterr().err
     with pytest.raises(SystemExit):
         main(["--preset", "git", "x"])
-    assert "cannot be combined" in capsys.readouterr().err
+    assert "invalid arguments; see --help" in capsys.readouterr().err
 
 
 def _run(start: Path, **env: str) -> subprocess.CompletedProcess[bytes]:

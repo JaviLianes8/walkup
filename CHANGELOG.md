@@ -6,6 +6,25 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-03
+
+- Stabilize the twenty exported names, their signatures and defaults, ordered nearest-first
+  discovery, marker filters, walk boundaries, presets, typed results and CLI exit statuses.
+- Error messages no longer echo paths, marker names or invalid option values. Original
+  inputs remain available in error attributes. CLI usage errors use a fixed diagnostic;
+  filesystem failures are reported without a traceback or input contents.
+- Invalid `mode` and `on_error` values now raise `InvalidMarkerError` (still a `ValueError`).
+  Non-callable marker checks are rejected at construction instead of failing during search.
+- The last `root` assignment in an EditorConfig preamble now wins. Only LF/CRLF split
+  preamble lines; a section must have both opening and closing brackets. Inline comments
+  remain part of values. The optional UTF-8 BOM remains accepted.
+- A closed CLI output pipe returns failure instead of propagating `BrokenPipeError`.
+- Public classes now pickle by their `walkup` names; old private import paths remain
+  available for existing pickles. Public annotations resolve at runtime.
+- Remove the incidental `annotations` attribute from the package namespace.
+- Add executable public examples, seeded properties, specification/reference checks,
+  strict typing contracts, and wheel/sdist validation. Ship the `py.typed` marker.
+
 ## [0.2.0]
 
 - `find`, `find_all`, `iter_matches` and `require` search for one marker or several, in
