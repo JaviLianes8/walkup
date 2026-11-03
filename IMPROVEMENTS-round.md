@@ -35,14 +35,14 @@ behaviour, and new parameters are keyword only.
    a missing start raises `StartNotFoundError` (a `FileNotFoundError`); bad markers raise
    `InvalidMarkerError` (a `ValueError`); `on_error="raise"` surfaces unreadable
    directories as `WalkupPermissionError` (a `PermissionError`). All share `WalkupError`.
-10. **Command line tool.** `walkup MARKER...` prints the nearest directory and exits 1
+10. **Command line tool.** `walkupward MARKER...` prints the nearest directory and exits 1
     when nothing matches; `--all`, `--every`, `--kind`, `--preset`, `--ceiling`,
-    `--stop-at`, `--same-filesystem`, `--lexical`, `--path`. Also `python -m walkup`.
+    `--stop-at`, `--same-filesystem`, `--lexical`, `--path`. Also `python -m walkupward`.
 11. **Documentation.** Full docstrings and a `GUIDE.md` covering every option, the
     symlink and ceiling semantics, and recipes.
 12. **Real end to end coverage.** Contract tests over real temporary trees, git cross
     checks, and a test that builds the wheel, installs it in a fresh virtual environment
-    and runs the installed `walkup` script.
+    and runs the installed `walkupward` script.
 
 Not taken this round: glob markers (patterns hide cost and ordering questions) and TOML
 table checks for tool specific configuration (no parser on Python 3.10 without a

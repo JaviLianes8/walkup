@@ -1,10 +1,10 @@
-# walkup 1.0.0 certification report
+# walkupward 1.0.0 certification report
 
 Date: 2026-11-03.
 
 Progress:
 - [x] Inspect main and create `release/1.0.0` from `0319afc`.
-- [x] Check PyPI: https://pypi.org/pypi/walkup/json returned HTTP 404 on 2026-11-03.
+- [x] Check PyPI: https://pypi.org/pypi/walkupward/json returned HTTP 404 on 2026-11-03.
 - [x] Review public API, examples, annotations and error contracts.
 - [x] Fetch the EditorConfig specification and run Git/reference-parser comparisons.
 - [x] Add seeded filesystem/preamble properties and bounded-diagnostic contracts.
@@ -20,7 +20,7 @@ Progress:
 
 The twenty names in `__all__` retain their signatures and defaults. `__version__` is
 1.0.0. `Marker` and `Match` remain frozen dataclasses; exception attributes, builtin
-base classes, and pickle round trips are tested. Public types pickle through `walkup`;
+base classes, and pickle round trips are tested. Public types pickle through `walkupward`;
 old private paths remain importable. Runtime type hints resolve without private imports.
 Literal aliases have executable module examples because their runtime objects belong
 to `typing`; every public callable and property has a runnable docstring.
@@ -37,7 +37,7 @@ Fetched 2026-11-03: https://spec.editorconfig.org/ and the source at
 https://raw.githubusercontent.com/editorconfig/specification/f58051318a657b52b73ff2d7774a66fa6c296bd8/index.rst.
 `GROUND-TRUTH.json` records revision, URL, date, license, size and SHA-256. The downloaded
 text stays outside the repository. `scripts/fetch_upstream.py` refetches and verifies it;
-`WALKUP_TRUTH` enables its hash and rule-presence test. Derived cases are explicitly
+`WALKUPWARD_TRUTH` enables its hash and rule-presence test. Derived cases are explicitly
 labelled as handwritten, not copied vectors. The Python EditorConfig 0.17.1 reference
 parser agrees on eight preamble cases. Its obsolete inline-comment behavior is excluded
 from the oracle subset; current specification contracts cover that difference.
@@ -60,7 +60,8 @@ directories. Cross-device stopping is also tested with an injected device probe.
 
 ## Pending independent stages
 
-Items 16 and 19 have not been run. No independent reviewer or lens verdict is claimed.
+Item 16 has not been run. Item 19 round 1 ran and failed on all five lenses; its findings
+are fixed below and await re-verification by each lens. No PASS verdict is claimed yet.
 Merge and publication (item 17) remain the maintainer's responsibility.
 
 ## Preparation scorecard
@@ -130,7 +131,7 @@ test suite, but excludes release/process notes and local evidence.
 The sdist tests were extracted without `src`, installed-wheel locations were printed
 and checked, and the full suite ran from that external directory. The e2e fixture also
 creates another fresh venv, installs the wheel without an index, drives the actual
-console script, and runs an isolated `python -I` consumer plus `python -I -m walkup`.
+console script, and runs an isolated `python -I` consumer plus `python -I -m walkupward`.
 
 The final source suite has 188 passing tests and four platform skips: undecodable POSIX
 names, POSIX directory traversal denial, unavailable symlink privileges, and a second
@@ -170,7 +171,68 @@ one POSIX-only skip each), including actual closed pipes for ordinary output, he
 version. Format, lint, `mypy --strict src`, `mypy --strict src tests` and the full source
 suite all exit zero. Production source files are at most 180 lines.
 
-Final inspected artifact SHA-256 values:
+Artifact SHA-256 values inspected at 2b2c0f9, before the rename (superseded by the QA
+round 1 build below):
 
-- `walkup-1.0.0-py3-none-any.whl`: `84ebc4f4d380e1c9210e32bee1a73824b5d1db544f4d9f55e9f9ccf3e7964069`
-- `walkup-1.0.0.tar.gz`: `2eddaed7e00773bba0210e1f015c53f34ffa7fe56548e7ac8b2d3e9fd746e076`
+- `walkupward-1.0.0-py3-none-any.whl`: `84ebc4f4d380e1c9210e32bee1a73824b5d1db544f4d9f55e9f9ccf3e7964069`
+- `walkupward-1.0.0.tar.gz`: `2eddaed7e00773bba0210e1f015c53f34ffa7fe56548e7ac8b2d3e9fd746e076`
+
+## Rename
+
+PyPI refused the first name as too similar to an existing project, so the distribution,
+the import package, the console script and `python -m` usage are now `walkupward`. Project
+URLs point to https://github.com/JaviLianes8/walkupward. The old name was never published:
+https://pypi.org/pypi/walkup/json returned HTTP 404 on 2026-11-04 (as did the new name), so
+there is no installed release to upgrade from and no upgrade path to test.
+
+## QA round 1
+
+All five lenses failed round 1 with 20 findings. Every behaviour finding first got a
+contract that fails on the pre-fix source: run against the 2b2c0f9 source (renamed only),
+the new contracts gave 52 failed, 106 passed. Every surviving lens e mutant was re-applied
+alone and is now killed. Fixes are in commit ea3c352; this report section follows it.
+
+| Id | Fix | Contract |
+| --- | --- | --- |
+| A1, D-001 | `--kind` defaults to unset, so an explicit `--kind any` with a preset is a usage error | `test_cli_rules.py` (in process and by subprocess) |
+| A2 | `walk_up` builds its arguments before returning the generator; a non-path boundary raises `TypeError` at call time | `test_eager.py` |
+| A3 | CHANGELOG no longer claims `find_up` takes the walk options | docs |
+| B-01 | `core.bare` (and a config git refuses) means no working tree; ignored for linked worktrees, as in git | `test_git_config.py`, against real git |
+| B-02 | `GIT_COMMON_DIR` and `GIT_OBJECT_DIRECTORY` honoured | `test_git_config.py`, against real git |
+| B-03 | ceiling entries after an empty one compared literally | `test_git_env.py`, ten variants against real git |
+| B-04 | git boolean grammar (strtoimax bases, k/m/g, int range); an invalid value gives `None` | `test_git_env.py`, against real git |
+| B-05 | HEAD read as bytes, first 255 only, ASCII whitespace | `test_git_bytes.py`, against real git |
+| B-06 | a NUL ends the gitfile and commondir path | `test_git_bytes.py`, against real git |
+| C-001 | nearest ceiling chosen by prefix comparison, no ancestor set | `test_hostile.py` (peak memory under 5 MB at depth 4,000) |
+| C-002 | `WalkupPermissionError` raised `from None`; original kept as `__context__` | `test_hostile.py` |
+| C-003 | `start` passed through `Path()` first: `TypeError` in all nine searches | `test_eager.py` |
+| C-004 | `ValueError` from `os.stat` counts as absent; callback errors still propagate | `test_hostile.py` |
+| E-M10 | contract on `Marker.dir` keeping and running its check | `test_forwarding.py` |
+| E-M32 | presets reject marker directories | `test_forwarding.py` |
+| E-M38 | git filesystem policy: default, explicit, environment 0 and 1, override | `test_forwarding.py` |
+| E-M44, E-M46, E-M48 | every search and preset forwards `stop_at`, `ceilings`, `same_filesystem` | `test_forwarding.py` |
+
+Mutation re-run (each edit alone, `tests/test_forwarding.py`):
+
+| Mutant | Caught by |
+| --- | --- |
+| M10 `Marker.dir` drops its check | `test_marker_dir_keeps_and_runs_its_check` |
+| M32 node marker kind `any` | `test_preset_markers_must_be_regular_files[node_root]` |
+| M38 git always crosses filesystems | `test_git_discovery_honours_the_filesystem_policy[None-None-False]` |
+| M44 `require` drops `same_filesystem` | `test_walk_options_reach_the_walk[require-same_filesystem]` |
+| M46 `python_root` drops `stop_at` | `test_walk_options_reach_the_walk[python_root-stop_at]` |
+| M48 `editorconfig_chain` drops `same_filesystem` | `test_walk_options_reach_the_walk[editorconfig_chain-same_filesystem]` |
+
+Gates after the fixes, CPython 3.13.2 on Windows: `ruff format --check .`, `ruff check .`,
+`mypy --strict src` exit 0; `pytest` 319 passed, 12 platform skips. A wheel built from
+ea3c352 installed into a fresh venv imports `walkupward`, and the `walkupward` script and
+`python -m walkupward` find a marker; `--preset python --kind any` exits 1.
+
+- `walkupward-1.0.0-py3-none-any.whl`: `21bc9d0f1ec47fa4eac208ad3ed8dcd1aceb04abf0f56c49ef3eb827a35c0189`
+- `walkupward-1.0.0.tar.gz`: `1663a28861910052425d2a997fd63bde1667746046efac44d5538f5621d960cb`
+
+The interpreter matrix above predates these fixes and is rerun with the round 2 lenses.
+
+### Disputed findings
+
+None.
