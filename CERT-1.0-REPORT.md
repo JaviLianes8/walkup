@@ -10,11 +10,11 @@ Progress:
 - [x] Add seeded filesystem/preamble properties and bounded-diagnostic contracts.
 - [x] Update README, GUIDE, CHANGELOG and 1.0.0 metadata.
 - [x] Inspect wheel/sdist and run isolated installed consumers.
-- [ ] Run all available supported interpreters.
+- [x] Run all twelve available supported interpreter builds from the installed wheel.
 - [x] Complete the deliberate mutation round.
 - [x] Four gates and strict typing of tests pass.
 - [ ] Independent review and five QA lenses (separate stage).
-- [ ] PR; merge and publication remain pending.
+- [ ] Merge and publication (separate stage).
 
 ## API and behavior
 
@@ -76,14 +76,14 @@ Merge and publication (item 17) remain the maintainer's responsibility.
 | 7 | PASS | Fetched specification, real Git commands and EditorConfig reference parser, detailed above. |
 | 8 | PASS | Isolated wheel consumers and CLI; no PyPI release exists to upgrade. |
 | 9 | PASS | Seeded trees, preambles and 500 malformed gitfiles; large files and diagnostics. |
-| 10 | pending | Twelve builds passed the first matrix and final CLI/doc checks; full final-wheel matrix in progress. |
+| 10 | PASS | Final-wheel matrix below: all twelve available interpreter builds, including free-threaded Python. |
 | 11 | PASS | README problem, scoped comparisons, absolute links, exact badge and strict twine checks. |
 | 12 | PASS | Dated 2026-11-03 section with all behavior changes. |
 | 13 | PASS | 1.0.0, stable classifier, Python 3.10 through 3.14, MIT, project URLs, no runtime dependencies. |
 | 14 | PASS | Wheel: 17 package/metadata/license entries. Sdist: source, tests, docs, manifest/refetch script and metadata; no fetched text or scratch files. |
 | 15 | PASS | Format, lint, source types and pytest each exit zero separately; test types also clean. |
 | 16 | pending | Separate independent review. |
-| 17 | pending | PR preparation only; merge and publication not performed. |
+| 17 | pending | Merge and publication are outside preparation. |
 | 18 | PASS | Mutation table below: all intentional defects detected. |
 | 19 | pending | Five separate QA lenses. |
 
@@ -140,3 +140,37 @@ The reference parser emits eight deprecation warnings on Python 3.14, with no fa
 There are 22 killed mutations and no survivors. A separate large-file run used a comment
 and value each of 100,000, 1,000,000 and 10,000,000 characters. Median lookup times over
 seven runs were 0.0020, 0.0085 and 0.0570 seconds respectively on this machine.
+
+## Final interpreter matrix
+
+All tests ran from the sdist with its `src` directory omitted, against the installed
+final wheel. Duplicate installations of the same interpreter build were deduplicated.
+No available supported version was left untested. The four embedded builds lack `venv`
+and `ensurepip`; their five nested-venv e2e tests were excluded. They still ran API,
+module CLI, documentation, Git, reference-parser and property contracts against the
+installed wheel. All eight full builds also ran the nested-venv console-script tests.
+
+| CPython | Distribution | Result |
+| --- | --- | --- |
+| 3.10.11 | embedded | 183 passed, 4 platform skips |
+| 3.10.22 | full | 188 passed, 4 platform skips |
+| 3.11.11 | full | 188 passed, 4 platform skips |
+| 3.11.18 | full | 188 passed, 4 platform skips |
+| 3.11.9 | embedded | 183 passed, 4 platform skips |
+| 3.12.10 | embedded | 183 passed, 4 platform skips |
+| 3.12.16 | full | 188 passed, 4 platform skips |
+| 3.13.18 | full | 188 passed, 4 platform skips |
+| 3.13.2 | embedded | 183 passed, 4 platform skips |
+| 3.14.10 | full | 188 passed, 4 platform skips |
+| 3.14.10t | full | 188 passed, 4 platform skips |
+| 3.14.6 | full | 188 passed, 4 platform skips |
+
+The final wheel's CLI/doc suite also passed separately on all twelve builds (22 passed,
+one POSIX-only skip each), including actual closed pipes for ordinary output, help and
+version. Format, lint, `mypy --strict src`, `mypy --strict src tests` and the full source
+suite all exit zero. Production source files are at most 180 lines.
+
+Final inspected artifact SHA-256 values:
+
+- `walkup-1.0.0-py3-none-any.whl`: `84ebc4f4d380e1c9210e32bee1a73824b5d1db544f4d9f55e9f9ccf3e7964069`
+- `walkup-1.0.0.tar.gz`: `2eddaed7e00773bba0210e1f015c53f34ffa7fe56548e7ac8b2d3e9fd746e076`
