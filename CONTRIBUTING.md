@@ -10,7 +10,7 @@ pip install -r requirements-dev.txt
 
 ## Before you open a pull request
 
-- Keep public API in `src/walkup/__init__.py`; internals live in `_`-prefixed modules.
+- Keep public API in `src/walkupward/__init__.py`; internals live in `_`-prefixed modules.
 - Add a test for the behaviour you change. Tests run on real temporary directory trees
   and real git repositories; nothing is mocked.
 - Run `scripts/check.ps1` (format, lint, types, tests) and make sure it passes.

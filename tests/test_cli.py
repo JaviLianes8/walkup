@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from walkup import __version__
-from walkup._cli import main
+from walkupward import __version__
+from walkupward._cli import main
 
 from conftest import GitRunner, link_dir, make_repo, needs_git
 
@@ -133,19 +133,19 @@ def test_help_shows_runnable_examples(capsys: pytest.CaptureFixture[str]) -> Non
         main(["--help"])
     out = capsys.readouterr().out
     assert info.value.code == 0
-    assert "walkup --preset git" in out and "exit status" in out
+    assert "walkupward --preset git" in out and "exit status" in out
 
 
 def test_version(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit):
         main(["--version"])
-    assert capsys.readouterr().out.strip() == f"walkup {__version__}"
+    assert capsys.readouterr().out.strip() == f"walkupward {__version__}"
 
 
 def test_python_dash_m_runs_the_tool(tree: Path) -> None:
     src = Path(__file__).resolve().parents[1] / "src"
     done = subprocess.run(
-        [sys.executable, "-m", "walkup", "-s", str(tree / "pkg"), "setup.cfg"],
+        [sys.executable, "-m", "walkupward", "-s", str(tree / "pkg"), "setup.cfg"],
         capture_output=True,
         text=True,
         env={**os.environ, "PYTHONPATH": str(src)},

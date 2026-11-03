@@ -1,4 +1,4 @@
-# walkup guide
+# walkupward guide
 
 ## The walk
 
@@ -24,7 +24,7 @@ accept the same four options; the git presets take `ceilings` and `across_filesy
 when it is not on the walk. `find_up(..., root=...)` uses the same inclusive rule.
 
 ```python
-from walkup import walk_up
+from walkupward import walk_up
 
 walk_up("/w/a/b/c", ceilings=["/w/a"])  # /w/a/b/c, /w/a/b
 walk_up("/w/a/b/c", stop_at="/w/a")  # /w/a/b/c, /w/a/b, /w/a
@@ -46,7 +46,7 @@ text, and linked directories stay in place, like `pwd -L`. Ceilings and `stop_at
 normalised with the same policy.
 
 ```python
-from walkup import walk_up
+from walkupward import walk_up
 
 # /work/link -> /data/real
 walk_up("/work/link")  # /data/real, /data, /
@@ -65,7 +65,7 @@ A plain string is `Marker(name)`. A `Marker` has:
   `True` to accept. Use it to look inside a file.
 
 ```python
-from walkup import Marker
+from walkupward import Marker
 
 tox = Marker.file("tox.ini", lambda path: "[tox]" in path.read_text())
 ```
@@ -88,9 +88,11 @@ Keyword options: `start`, `mode`, `ceilings`, `stop_at`, `same_filesystem`, `res
 A `Match` has `directory`, `markers` and `paths` (every requested marker present in that
 directory, in request order), plus `marker`, `path` and `names` shortcuts.
 
-Arguments are validated when the call is made, even for the lazy `iter_matches`: a start
-that does not exist raises `StartNotFoundError`, and no markers raises
-`InvalidMarkerError`. `find_up` and `walk_up` keep their original lenient behaviour.
+Arguments are validated when the call is made, even for the lazy `iter_matches` and
+`walk_up`: a `start`, ceiling or `stop_at` that is not a path raises `TypeError` before the
+first item is requested, a start that does not exist raises `StartNotFoundError`, and no
+markers raises `InvalidMarkerError`. A marker name too long for the platform to express as a
+path counts as absent. `find_up` and `walk_up` still accept a start that does not exist.
 
 ### Unreadable entries
 
@@ -107,10 +109,17 @@ inspected, including inside a `check`, as absent. `on_error="raise"` raises
   with `gitdir: ` (one space) naming such a directory. As in git, an invalid `.git`
   directory is skipped, but an invalid `.git` file ends the search with `None` (git stops
   with an error there), and so does starting inside a repository directory (`.git` itself
-  or a bare repository), which has no working tree.
-  `ceilings` defaults to `GIT_CEILING_DIRECTORIES` (relative entries ignored) and
-  `across_filesystems` to `GIT_DISCOVERY_ACROSS_FILESYSTEM` (false when unset). The walk
-  is always physical. `GIT_DIR`, `GIT_WORK_TREE`, `core.worktree` and the
+  or a bare repository), which has no working tree. A repository whose config sets
+  `core.bare` (or holds a config git refuses to read) also ends the search with `None`.
+  `HEAD` is read like git: only its first 255 bytes, ASCII whitespace after `ref:`, and a
+  NUL ends the contents; a NUL also ends the path in a `.git` file or `commondir`.
+  `GIT_COMMON_DIR` and `GIT_OBJECT_DIRECTORY` are honoured.
+  `ceilings` defaults to `GIT_CEILING_DIRECTORIES` and `across_filesystems` to
+  `GIT_DISCOVERY_ACROSS_FILESYSTEM` (false when unset). As in git, relative ceiling entries
+  are ignored, and entries after an empty one are compared literally (no symlink or `..`
+  resolution, case sensitive) instead of being resolved. A filesystem variable that is not a
+  git boolean makes git stop with an error, so the result is `None`. The walk is always
+  physical. `GIT_DIR`, `GIT_WORK_TREE`, `core.worktree`, config includes and the
   `safe.directory` ownership check are not consulted.
 - `iter_git_roots(start=".", ...)` yields every enclosing working tree, nearest first: a
   submodule, then its superproject.
@@ -149,8 +158,8 @@ raise `IndexError`. Results returned by the searches always satisfy this invaria
 ## Command line
 
 ```
-walkup [options] MARKER...
-walkup [options] --preset {git,python,node,editorconfig}
+walkupward [options] MARKER...
+walkupward [options] --preset {git,python,node,editorconfig}
 ```
 
 | Option | Meaning |
@@ -166,17 +175,17 @@ walkup [options] --preset {git,python,node,editorconfig}
 | `--lexical` | keep symlinks in the path |
 | `--path` | print matched paths instead of directories |
 
-Options a preset cannot honour are usage errors: `--kind` and `--every` with any preset,
+Options a preset cannot honour are usage errors: `--kind` (even `--kind any`) and `--every` with any preset,
 `--lexical` and `--stop-at` with `git`, `--all` with `editorconfig` (it always prints the
 whole chain).
 
 Exit status: 0 when something matched, 1 when nothing matched or on an error (the message
-goes to stderr). `python -m walkup` runs the same tool.
+goes to stderr). `python -m walkupward` runs the same tool.
 
 ## Recipes
 
 ```python
-from walkup import Marker, find, git_root, python_root, require
+from walkupward import Marker, find, git_root, python_root, require
 
 # Load settings from the project that owns this module.
 here = python_root(__file__)
@@ -197,4 +206,4 @@ root = require(Marker.dir(".git"), "pyproject.toml", mode="all").directory
 after normalization. New code should prefer `find` for marker validation. Searches are
 not a sandbox: relative markers may contain `..`, and filesystem contents may change between probes. Duplicate requested markers are retained in request order.
 
-See the [CHANGELOG](https://github.com/JaviLianes8/walkup/blob/main/CHANGELOG.md) for 1.0.0 changes.
+See the [CHANGELOG](https://github.com/JaviLianes8/walkupward/blob/main/CHANGELOG.md) for 1.0.0 changes.

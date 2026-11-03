@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from walkup._cli import main
+from walkupward._cli import main
 
 SRC = Path(__file__).resolve().parents[1] / "src"
 
@@ -21,6 +21,10 @@ SRC = Path(__file__).resolve().parents[1] / "src"
         ["--preset", "git", "--lexical"],
         ["--preset", "git", "--stop-at", "."],
         ["--preset", "python", "--kind", "dir"],
+        ["--preset", "python", "--kind", "any"],
+        ["--preset", "node", "--kind", "any"],
+        ["--preset", "git", "--kind", "any"],
+        ["--preset", "editorconfig", "-k", "any"],
         ["--preset", "node", "--every"],
         ["--preset", "editorconfig", "--all"],
     ],
@@ -46,7 +50,7 @@ def test_missing_arguments_get_a_precise_message(capsys: pytest.CaptureFixture[s
 
 def _run(start: Path, **env: str) -> subprocess.CompletedProcess[bytes]:
     return subprocess.run(
-        [sys.executable, "-m", "walkup", "-s", str(start), "marker.txt"],
+        [sys.executable, "-m", "walkupward", "-s", str(start), "marker.txt"],
         capture_output=True,
         env={**os.environ, "PYTHONPATH": str(SRC), **env},
         check=False,
@@ -84,7 +88,7 @@ def test_a_closed_output_pipe_exits_one_without_a_traceback(
 ) -> None:
     env = {**os.environ, "PYTHONPATH": str(SRC)}
     with subprocess.Popen(
-        [sys.executable, "-m", "walkup", "--start", str(tmp_path), *args],
+        [sys.executable, "-m", "walkupward", "--start", str(tmp_path), *args],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         env=env,
@@ -94,3 +98,14 @@ def test_a_closed_output_pipe_exits_one_without_a_traceback(
         stderr = process.stderr.read()
         assert process.wait(timeout=60) == 1
         assert stderr == b""
+
+
+def test_an_explicit_kind_with_a_preset_fails_through_the_real_command(tmp_path: Path) -> None:
+    (tmp_path / "pyproject.toml").write_text("")
+    env = {**os.environ, "PYTHONPATH": str(SRC)}
+    command = [sys.executable, "-m", "walkupward", "-s", str(tmp_path), "--preset", "python"]
+    done = subprocess.run([*command, "--kind", "any"], capture_output=True, env=env, check=False)
+    assert done.returncode == 1 and done.stdout == b""
+    assert b"invalid arguments; see --help" in done.stderr
+    done = subprocess.run(command, capture_output=True, env=env, check=False)
+    assert done.returncode == 0 and done.stdout.strip() == os.fsencode(tmp_path.resolve())

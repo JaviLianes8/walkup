@@ -6,8 +6,8 @@ import os
 from collections.abc import Iterable
 from pathlib import Path
 
-from walkup._types import Kind
-from walkup._walk import walk_up
+from walkupward._types import Kind
+from walkupward._walk import walk_up
 
 
 def find_up(

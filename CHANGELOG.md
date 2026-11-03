@@ -6,8 +6,9 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-## [1.0.0] - 2026-11-03
+## [1.0.0] - 2026-11-04
 
+- Renamed from `walkup` to `walkupward`: the distribution, the import package, the command and `python -m walkupward`.
 - Stabilize the twenty exported names, their signatures and defaults, ordered nearest-first
   discovery, marker filters, walk boundaries, presets, typed results and CLI exit statuses.
 - Error messages no longer echo paths, marker names or invalid option values. Original
@@ -20,9 +21,27 @@ All notable changes to this project are documented here. The format follows
   remain part of values. The optional UTF-8 BOM remains accepted.
 - A closed CLI output pipe returns failure instead of propagating `BrokenPipeError`.
 - Malformed gitfiles containing NUL are ignored as invalid instead of raising `ValueError`.
-- Public classes now pickle by their `walkup` names; old private import paths remain
+- Public classes now pickle by their `walkupward` names; old private import paths remain
   available for existing pickles. Public annotations resolve at runtime.
 - Remove the incidental `annotations` attribute from the package namespace.
+- `git_root` and `iter_git_roots` now follow git more closely: a repository whose config
+  sets `core.bare` (or a config git refuses) has no working tree and gives `None`;
+  `GIT_COMMON_DIR` and `GIT_OBJECT_DIRECTORY` are honoured; `GIT_CEILING_DIRECTORIES`
+  entries after an empty entry are compared literally; an invalid
+  `GIT_DISCOVERY_ACROSS_FILESYSTEM` value gives `None` instead of being read as false or
+  trimmed; `HEAD` is validated on its first 255 bytes with ASCII whitespace; a NUL ends the
+  path in a `.git` file or `commondir`.
+- `walk_up` and `iter_matches` check `start`, ceilings and `stop_at` when called: a value
+  that is not a path raises `TypeError` before the first item. Every search raises
+  `TypeError` for a non-path `start` such as an integer, instead of `OverflowError` or
+  treating it as a file descriptor.
+- A marker name too long for the platform to express as a path counts as absent instead of
+  raising `ValueError`.
+- `WalkupPermissionError` no longer displays the original `PermissionError` in tracebacks
+  (it stays available as `__context__`), so its text cannot leak.
+- Choosing the nearest ceiling no longer builds every ancestor of the start, removing
+  quadratic time and memory on very deep paths.
+- The CLI rejects an explicit `--kind` with a preset even when its value is `any`.
 - Add executable public examples, seeded properties, specification/reference checks,
   strict typing contracts, and wheel/sdist validation. Ship the `py.typed` marker.
 
@@ -33,13 +52,13 @@ All notable changes to this project are documented here. The format follows
   present there.
 - `Marker` describes a name, a kind (`"any"`, `"file"`, `"dir"`) and an optional check that
   inspects the candidate path.
-- `walk_up` and every search accept `ceilings` (git `GIT_CEILING_DIRECTORIES` semantics),
+- `walk_up`, `find`, `find_all`, `iter_matches`, `require` and the non-git presets accept `ceilings` (git `GIT_CEILING_DIRECTORIES` semantics),
   an inclusive `stop_at`, `same_filesystem`, and `resolve` for physical or lexical walks.
 - Presets: `git_root` and `iter_git_roots` (worktrees and submodules, discovery step by
   step like git, honouring the git ceiling and filesystem variables), `python_root`, `node_root` and `editorconfig_chain`.
 - Typed errors: `WalkupError`, `InvalidMarkerError`, `StartNotFoundError`,
   `MarkerNotFoundError` and `WalkupPermissionError`, each also a matching builtin.
-- A `walkup` command line tool (also `python -m walkup`) with `--all`, `--every`,
+- A command line tool (now `walkupward`, also `python -m walkupward`) with `--all`, `--every`,
   `--kind`, `--preset`, `--ceiling`, `--stop-at`, `--same-filesystem`, `--lexical` and
   `--path`.
 - `walk_up` starts at the parent of any existing start that is not a directory, such as a

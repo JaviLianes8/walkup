@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from walkup import editorconfig_chain
+from walkupward import editorconfig_chain
 
 # https://spec.editorconfig.org/ sections File Format and File Processing, 2026-11-03.
 # These are derived cases, not copied upstream vectors. The Python reference still
@@ -61,9 +61,9 @@ def test_inline_comments_and_non_lf_separators_are_not_root(tmp_path: Path, suff
 
 
 def test_fetched_specification_has_the_recorded_hash() -> None:
-    source = os.environ.get("WALKUP_TRUTH")
+    source = os.environ.get("WALKUPWARD_TRUTH")
     if not source:
-        pytest.skip("set WALKUP_TRUTH to the fetched specification directory")
+        pytest.skip("set WALKUPWARD_TRUTH to the fetched specification directory")
     manifest = Path(__file__).resolve().parents[1] / "GROUND-TRUTH.json"
     for entry in json.loads(manifest.read_text(encoding="utf-8")):
         data = (Path(source) / entry["file"]).read_bytes()

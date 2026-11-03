@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import get_type_hints as _get_type_hints
 
-from walkup._core import find_up
-from walkup._git import git_root, iter_git_roots
-from walkup._presets import editorconfig_chain, node_root, python_root
-from walkup._search import find, find_all, iter_matches, require
-from walkup._types import (
+from walkupward._core import find_up
+from walkupward._git import git_root, iter_git_roots
+from walkupward._presets import editorconfig_chain, node_root, python_root
+from walkupward._search import find, find_all, iter_matches, require
+from walkupward._types import (
     InvalidMarkerError,
     Kind,
     Marker,
@@ -19,7 +19,7 @@ from walkup._types import (
     WalkupError,
     WalkupPermissionError,
 )
-from walkup._walk import walk_up
+from walkupward._walk import walk_up
 
 __version__ = "1.0.0"
 

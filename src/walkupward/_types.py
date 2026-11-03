@@ -1,4 +1,4 @@
-"""Typed values shared across walkup: markers, matches and errors."""
+"""Typed values shared across walkupward: markers, matches and errors."""
 
 from __future__ import annotations
 
@@ -7,16 +7,16 @@ from dataclasses import dataclass
 from pathlib import Path, PurePath
 from typing import Literal
 
-from walkup._errors import (
+from walkupward._errors import (
     InvalidMarkerError as InvalidMarkerError,
 )
-from walkup._errors import (
+from walkupward._errors import (
     StartNotFoundError as StartNotFoundError,
 )
-from walkup._errors import (
+from walkupward._errors import (
     WalkupError as WalkupError,
 )
-from walkup._errors import (
+from walkupward._errors import (
     WalkupPermissionError as WalkupPermissionError,
 )
 
@@ -141,7 +141,7 @@ class MarkerNotFoundError(WalkupError, LookupError):
     """No directory on the walk satisfied the search passed to ``require``.
 
     >>> from pathlib import Path
-    >>> from walkup import Marker
+    >>> from walkupward import Marker
     >>> error = MarkerNotFoundError((Marker("config"),), Path("."), "any")
     >>> error.mode, error.markers[0].name
     ('any', 'config')

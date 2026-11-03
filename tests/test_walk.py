@@ -7,7 +7,7 @@ from pathlib import Path, PureWindowsPath
 
 import pytest
 
-from walkup import find, walk_up
+from walkupward import find, walk_up
 
 from conftest import IS_WINDOWS, link_dir
 
@@ -127,8 +127,8 @@ def test_same_filesystem_does_not_stop_on_one_device(tmp_path: Path) -> None:
 
 
 def _other_volume() -> Path | None:
-    """A writable scratch folder on another filesystem, named by WALKUP_TEST_OTHER_VOLUME."""
-    raw = os.environ.get("WALKUP_TEST_OTHER_VOLUME")
+    """A writable scratch folder on another filesystem, named by WALKUPWARD_TEST_OTHER_VOLUME."""
+    raw = os.environ.get("WALKUPWARD_TEST_OTHER_VOLUME")
     if not raw or not Path(raw).is_dir():
         return None
     if os.stat(raw).st_dev == os.stat(tempfile.gettempdir()).st_dev:
@@ -139,7 +139,7 @@ def _other_volume() -> Path | None:
 def test_same_filesystem_stops_before_another_device(tmp_path: Path) -> None:
     volume = _other_volume()
     if volume is None:
-        pytest.skip("set WALKUP_TEST_OTHER_VOLUME to a scratch folder on another filesystem")
+        pytest.skip("set WALKUPWARD_TEST_OTHER_VOLUME to a scratch folder on another filesystem")
     remote = Path(tempfile.mkdtemp(dir=volume))
     try:
         (remote / "sub").mkdir()

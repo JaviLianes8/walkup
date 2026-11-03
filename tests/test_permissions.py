@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from walkup import Marker, WalkupPermissionError, find
+from walkupward import Marker, WalkupPermissionError, find
 
 from conftest import IS_WINDOWS
 

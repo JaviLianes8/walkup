@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 class WalkupError(Exception):
-    """Base class for every error walkup raises on purpose.
+    """Base class for every error walkupward raises on purpose.
 
     >>> isinstance(WalkupError("search failed"), Exception)
     True

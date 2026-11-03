@@ -1,4 +1,4 @@
-# walkup
+# walkupward
 
 [![Lianes8 Certified](https://lianes8studio.com/certified/lianes8-certified-badge.svg)](https://lianes8studio.com/certified)
 
@@ -7,13 +7,13 @@ Walk up from a start directory to find a marker file or directory, typed and dep
 ## Install
 
 ```
-pip install walkup
+pip install walkupward
 ```
 
 ## Usage
 
 ```python
-from walkup import Marker, find, find_all, git_root, python_root, require
+from walkupward import Marker, find, find_all, git_root, python_root, require
 
 # Nearest directory holding pyproject.toml or setup.cfg, and which one was there.
 match = find("pyproject.toml", "setup.cfg")
@@ -36,7 +36,7 @@ project = python_root(__file__)
 The original two functions keep their behaviour:
 
 ```python
-from walkup import find_up, walk_up
+from walkupward import find_up, walk_up
 
 config = find_up(["pyproject.toml", "setup.cfg"])  # a Path or None
 for directory in walk_up("src/pkg"):  # start, then every ancestor
@@ -46,16 +46,16 @@ for directory in walk_up("src/pkg"):  # start, then every ancestor
 ## Command line
 
 ```
-walkup pyproject.toml               # nearest directory holding pyproject.toml
-walkup --every pyproject.toml .git  # nearest directory holding both
-walkup --all package.json           # every enclosing directory with package.json
-walkup --preset git                 # repository top level
-walkup --preset editorconfig --path # the .editorconfig files that apply here
-root=$(walkup --preset git) && cd "$root"
+walkupward pyproject.toml               # nearest directory holding pyproject.toml
+walkupward --every pyproject.toml .git  # nearest directory holding both
+walkupward --all package.json           # every enclosing directory with package.json
+walkupward --preset git                 # repository top level
+walkupward --preset editorconfig --path # the .editorconfig files that apply here
+root=$(walkupward --preset git) && cd "$root"
 ```
 
 It prints one directory per line (matched paths with `--path`), exits 0 when something matched and 1 when nothing did.
-Errors go to stderr with exit status 1. `walkup --help` lists every option.
+Errors go to stderr with exit status 1. `walkupward --help` lists every option.
 
 ## What you get
 
@@ -71,32 +71,32 @@ Errors go to stderr with exit status 1. `walkup --help` lists every option.
   (`LookupError`), `StartNotFoundError` (`FileNotFoundError`), `InvalidMarkerError`
   (`ValueError`), `WalkupPermissionError` (`PermissionError`), all under `WalkupError`.
 
-See [GUIDE](https://github.com/JaviLianes8/walkup/blob/main/GUIDE.md) for every option, the exact ceiling and symlink rules, and recipes.
+See [GUIDE](https://github.com/JaviLianes8/walkupward/blob/main/GUIDE.md) for every option, the exact ceiling and symlink rules, and recipes.
 
 ## Why
 
-For a one-off search, a loop over `pathlib.Path.parents` is often enough. `walkup`
+For a one-off search, a loop over `pathlib.Path.parents` is often enough. `walkupward`
 adds ordered markers, file/directory filters, inclusive boundaries, ceilings, typed
 results and a CLI. Use Git itself when you need its complete repository configuration
 and ownership policy: the Git preset only implements the discovery subset described in
-the [GUIDE](https://github.com/JaviLianes8/walkup/blob/main/GUIDE.md).
+the [GUIDE](https://github.com/JaviLianes8/walkupward/blob/main/GUIDE.md).
 Use an [EditorConfig core](https://editorconfig.org/) to resolve settings for a file;
 `editorconfig_chain` only finds the enclosing configuration files. Runtime dependencies: none.
 
 ## Development
 
-Install `walkup[dev]`, then run `ruff format --check .`, `ruff check .`,
+Install `walkupward[dev]`, then run `ruff format --check .`, `ruff check .`,
 `mypy --strict src tests` and `pytest --basetemp=<scratch-directory>`.
 Tests use a 300-second per-test timeout. Git tests invoke a real local Git installation.
 To check the pinned specification, run `python scripts/fetch_upstream.py <scratch-directory>`
-and set `WALKUP_TRUTH` to that directory. Installing `editorconfig==0.17.1` enables the
+and set `WALKUPWARD_TRUTH` to that directory. Installing `editorconfig==0.17.1` enables the
 optional reference-parser tests. Both sets skip cleanly when unavailable.
-The [CHANGELOG](https://github.com/JaviLianes8/walkup/blob/main/CHANGELOG.md) lists the
+The [CHANGELOG](https://github.com/JaviLianes8/walkupward/blob/main/CHANGELOG.md) lists the
 1.0.0 behavior changes.
 
 ## License
 
-MIT. See [LICENSE](https://github.com/JaviLianes8/walkup/blob/main/LICENSE).
+MIT. See [LICENSE](https://github.com/JaviLianes8/walkupward/blob/main/LICENSE).
 
 ## Links
 

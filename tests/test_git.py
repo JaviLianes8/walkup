@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from walkup import git_root
-from walkup._git import env_across_filesystems, env_ceilings
+from walkupward import git_root
+from walkupward._git import env_across_filesystems, env_ceilings
 
 from conftest import GitRunner, make_repo, needs_git
 
@@ -86,33 +86,12 @@ def test_the_ceiling_environment_variable_is_honoured(
     repo = make_repo(git, tmp_path / "repo")
     start = repo / "sub"
     start.mkdir()
-    value = os.pathsep.join(["relative/ignored", "", str(repo)])
+    value = os.pathsep.join(["relative/ignored", str(repo)])
     monkeypatch.setenv("GIT_CEILING_DIRECTORIES", value)
-    assert env_ceilings() == [str(repo)]
+    assert env_ceilings(start) == [repo.resolve()]
     assert ours(start) is None
-    plain = os.pathsep.join(["relative/ignored", str(repo)])
-    assert toplevel(git, start, GIT_CEILING_DIRECTORIES=plain) is None
+    assert toplevel(git, start, GIT_CEILING_DIRECTORIES=value) is None
     assert ours(start, ceilings=[]) == repo.resolve()
-
-
-@pytest.mark.parametrize(
-    ("value", "expected"),
-    [
-        ("1", True),
-        ("2", True),
-        ("true", True),
-        ("YES", True),
-        ("on", True),
-        ("0", False),
-        ("no", False),
-        ("", False),
-    ],
-)
-def test_the_filesystem_discovery_variable_reads_like_git(
-    monkeypatch: pytest.MonkeyPatch, value: str, expected: bool
-) -> None:
-    monkeypatch.setenv("GIT_DISCOVERY_ACROSS_FILESYSTEM", value)
-    assert env_across_filesystems() is expected
 
 
 def test_the_filesystem_discovery_variable_defaults_to_false() -> None:

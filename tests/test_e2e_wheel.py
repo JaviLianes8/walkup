@@ -23,7 +23,7 @@ def _bin(env_dir: Path, name: str) -> Path:
 @pytest.fixture(scope="module")
 def installed(tmp_path_factory: pytest.TempPathFactory) -> Path:
     work = tmp_path_factory.mktemp("e2e")
-    supplied = os.environ.get("WALKUP_WHEEL")
+    supplied = os.environ.get("WALKUPWARD_WHEEL")
     wheel = Path(supplied) if supplied else _build(work)
     assert wheel.is_file()
     env_dir = work / "venv"
@@ -48,15 +48,15 @@ def _build(work: Path) -> Path:
         if any(sign in output for sign in _OFFLINE):
             pytest.skip("the build backend could not be downloaded (offline)")
         pytest.fail(f"building the wheel failed: {output}")
-    wheels = list(work.glob("walkup-*.whl"))
+    wheels = list(work.glob("walkupward-*.whl"))
     assert len(wheels) == 1, wheels
     return wheels[0]
 
 
-def _walkup(env_dir: Path, *args: str | Path, cwd: Path) -> subprocess.CompletedProcess[str]:
+def _walkupward(env_dir: Path, *args: str | Path, cwd: Path) -> subprocess.CompletedProcess[str]:
     env = {k: v for k, v in os.environ.items() if k not in ("PYTHONPATH", "VIRTUAL_ENV")}
     return subprocess.run(
-        [str(_bin(env_dir, "walkup")), *map(str, args)],
+        [str(_bin(env_dir, "walkupward")), *map(str, args)],
         capture_output=True,
         text=True,
         cwd=cwd,
@@ -69,33 +69,34 @@ def test_the_installed_script_finds_a_marker(installed: Path, tmp_path: Path) ->
     (tmp_path / "pyproject.toml").write_text("")
     deep = tmp_path / "a" / "b"
     deep.mkdir(parents=True)
-    done = _walkup(installed, "pyproject.toml", cwd=deep)
+    done = _walkupward(installed, "pyproject.toml", cwd=deep)
     assert (done.returncode, done.stdout.strip(), done.stderr) == (0, str(tmp_path.resolve()), "")
 
 
 def test_the_installed_script_reports_absence_and_errors(installed: Path, tmp_path: Path) -> None:
-    done = _walkup(installed, "--stop-at", tmp_path, "absent.zz", cwd=tmp_path)
+    done = _walkupward(installed, "--stop-at", tmp_path, "absent.zz", cwd=tmp_path)
     assert (done.returncode, done.stdout) == (1, "")
-    done = _walkup(installed, cwd=tmp_path)
+    done = _walkupward(installed, cwd=tmp_path)
     assert done.returncode == 1 and "error" in done.stderr
 
 
 def test_the_installed_script_shows_help_and_version(installed: Path, tmp_path: Path) -> None:
-    done = _walkup(installed, "--help", cwd=tmp_path)
+    done = _walkupward(installed, "--help", cwd=tmp_path)
     assert done.returncode == 0 and "examples:" in done.stdout
-    version = _walkup(installed, "--version", cwd=tmp_path)
+    version = _walkupward(installed, "--version", cwd=tmp_path)
     python = _bin(installed, "python")
-    code = "import walkup; print(walkup.__version__)"
+    code = "import walkupward; print(walkupward.__version__)"
     expected = subprocess.run(
         [str(python), "-c", code], capture_output=True, text=True, cwd=tmp_path
     )
-    assert version.stdout.strip() == f"walkup {expected.stdout.strip()}"
+    assert version.stdout.strip() == f"walkupward {expected.stdout.strip()}"
 
 
 def test_the_installed_package_is_typed(installed: Path, tmp_path: Path) -> None:
     python = _bin(installed, "python")
     code = (
-        "import importlib.resources as r; print(r.files('walkup').joinpath('py.typed').is_file())"
+        "import importlib.resources as r; "
+        "print(r.files('walkupward').joinpath('py.typed').is_file())"
     )
     done = subprocess.run([str(python), "-c", code], capture_output=True, text=True, cwd=tmp_path)
     assert done.stdout.strip() == "True"
@@ -106,7 +107,7 @@ def test_installed_module_and_external_consumer(installed: Path, tmp_path: Path)
     python = _bin(installed, "python")
     code = """
 from pathlib import Path
-from walkup import Marker, find_all, find_up, python_root, require, walk_up
+from walkupward import Marker, find_all, find_up, python_root, require, walk_up
 root = Path.cwd()
 assert require(Marker.file('pyproject.toml'), stop_at=root).directory == root
 assert find_up('pyproject.toml') == root / 'pyproject.toml'
@@ -119,7 +120,7 @@ assert next(walk_up()) == root
     )
     assert done.returncode == 0, done.stderr
     done = subprocess.run(
-        [str(python), "-I", "-m", "walkup", "--path", "pyproject.toml"],
+        [str(python), "-I", "-m", "walkupward", "--path", "pyproject.toml"],
         cwd=tmp_path,
         capture_output=True,
         text=True,

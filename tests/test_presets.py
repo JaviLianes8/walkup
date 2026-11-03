@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from walkup import StartNotFoundError, editorconfig_chain, node_root, python_root
+from walkupward import StartNotFoundError, editorconfig_chain, node_root, python_root
 
 
 def test_python_root_takes_the_nearest_configuration(tmp_path: Path) -> None:

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from walkup import git_root, iter_git_roots
+from walkupward import git_root, iter_git_roots
 
 from conftest import GitRunner, make_repo, needs_git
 

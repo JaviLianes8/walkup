@@ -91,5 +91,11 @@ def make_repo(git: GitRunner, path: Path) -> Path:
 
 @pytest.fixture(autouse=True)
 def _no_git_environment(monkeypatch: pytest.MonkeyPatch) -> None:
-    for name in ("GIT_CEILING_DIRECTORIES", "GIT_DISCOVERY_ACROSS_FILESYSTEM", "GIT_DIR"):
+    for name in (
+        "GIT_CEILING_DIRECTORIES",
+        "GIT_DISCOVERY_ACROSS_FILESYSTEM",
+        "GIT_DIR",
+        "GIT_COMMON_DIR",
+        "GIT_OBJECT_DIRECTORY",
+    ):
         monkeypatch.delenv(name, raising=False)

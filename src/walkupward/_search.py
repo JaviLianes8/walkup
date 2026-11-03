@@ -6,8 +6,8 @@ from collections.abc import Iterable, Iterator
 from pathlib import Path
 from typing import Literal
 
-from walkup._probe import matches, probe_start
-from walkup._types import (
+from walkupward._probe import matches, probe_start
+from walkupward._types import (
     InvalidMarkerError,
     MarkerLike,
     MarkerNotFoundError,
@@ -15,7 +15,7 @@ from walkup._types import (
     Mode,
     coerce_markers,
 )
-from walkup._walk import StrPath, walk_up
+from walkupward._walk import StrPath, walk_up
 
 OnError = Literal["skip", "raise"]
 

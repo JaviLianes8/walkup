@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from walkup import (
+from walkupward import (
     InvalidMarkerError,
     Marker,
     MarkerNotFoundError,

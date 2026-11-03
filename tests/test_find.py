@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from walkup import find_up, walk_up
+from walkupward import find_up, walk_up
 
 
 def test_finds_a_marker_in_a_parent_directory(tmp_path: Path) -> None:

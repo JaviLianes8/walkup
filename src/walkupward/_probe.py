@@ -8,16 +8,18 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Literal
 
-from walkup._types import Marker, Match, Mode, StartNotFoundError, WalkupPermissionError
-from walkup._walk import StrPath
+from walkupward._types import Marker, Match, Mode, StartNotFoundError, WalkupPermissionError
+from walkupward._walk import StrPath
 
 OnError = Literal["skip", "raise"]
 
 
 def probe_start(start: StrPath) -> None:
-    """Raise ``StartNotFoundError`` when ``start`` does not exist."""
-    if not os.path.exists(start):
-        raise StartNotFoundError(Path(start))
+    """Raise ``TypeError`` for a non-path ``start`` and ``StartNotFoundError`` when missing."""
+    # Path() rejects integers first; os.path.exists would read them as file descriptors.
+    path = Path(start)
+    if not os.path.exists(path):
+        raise StartNotFoundError(path)
 
 
 def matches(
@@ -33,16 +35,23 @@ def probe(marker: Marker, directory: Path, on_error: OnError = "skip") -> Path |
     """Return ``directory / marker.name`` when it satisfies ``marker``, else ``None``."""
     candidate = directory / marker.name
     try:
-        info = os.stat(candidate)
+        try:
+            info = os.stat(candidate)
+        except ValueError:
+            # A name the platform cannot express as a path (too long, for example)
+            # cannot exist; errors raised by ``check`` still propagate below.
+            return None
         if marker.kind == "file" and not stat.S_ISREG(info.st_mode):
             return None
         if marker.kind == "dir" and not stat.S_ISDIR(info.st_mode):
             return None
         if marker.check is not None and not marker.check(candidate):
             return None
-    except PermissionError as exc:
+    except PermissionError:
         if on_error == "raise":
-            raise WalkupPermissionError(candidate) from exc
+            # The original stays in __context__ but is not displayed, since its message
+            # may carry private paths or text of any size.
+            raise WalkupPermissionError(candidate) from None
         return None
     except OSError:
         return None

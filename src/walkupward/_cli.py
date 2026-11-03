@@ -10,23 +10,23 @@ from collections.abc import Iterator, Sequence
 from contextlib import suppress
 from typing import NoReturn, Protocol
 
-from walkup import __version__
-from walkup._git import env_ceilings, iter_git_roots
-from walkup._presets import NODE_MARKERS, PYTHON_MARKERS, editorconfig_chain
-from walkup._search import iter_matches
-from walkup._types import Marker, Match, WalkupError
+from walkupward import __version__
+from walkupward._git import env_ceilings, iter_git_roots
+from walkupward._presets import NODE_MARKERS, PYTHON_MARKERS, editorconfig_chain
+from walkupward._search import iter_matches
+from walkupward._types import Marker, Match, WalkupError
 
 EXAMPLES = """\
 examples:
-  walkup pyproject.toml               nearest directory holding pyproject.toml
-  walkup pyproject.toml setup.cfg     nearest directory holding either one
-  walkup --every pyproject.toml .git  nearest directory holding both
-  walkup --all package.json           every enclosing directory with package.json
-  walkup --kind dir .venv             nearest .venv that is a directory
-  walkup --preset git                 git top level (worktrees and submodules too)
-  walkup --preset editorconfig --path the .editorconfig files that apply here
-  walkup --path --start src setup.cfg print the file path instead of its directory
-  root=$(walkup --preset git) && cd "$root"   jump to the repository root
+  walkupward pyproject.toml               nearest directory holding pyproject.toml
+  walkupward pyproject.toml setup.cfg     nearest directory holding either one
+  walkupward --every pyproject.toml .git  nearest directory holding both
+  walkupward --all package.json           every enclosing directory with package.json
+  walkupward --kind dir .venv             nearest .venv that is a directory
+  walkupward --preset git                 git top level (worktrees and submodules too)
+  walkupward --preset editorconfig --path the .editorconfig files that apply here
+  walkupward --path --start src setup.cfg print the file path instead of its directory
+  root=$(walkupward --preset git) && cd "$root"   jump to the repository root
 
 exit status: 0 when something matched, 1 when nothing matched or on an error.
 """
@@ -41,7 +41,7 @@ class _Writer(Protocol):
 class _Parser(argparse.ArgumentParser):
     def error(self, message: str) -> NoReturn:
         self.print_usage(sys.stderr)
-        self.exit(1, "walkup: error: invalid arguments; see --help\n")
+        self.exit(1, "walkupward: error: invalid arguments; see --help\n")
 
     def _print_message(self, message: str, file: _Writer | None = None) -> None:
         if file is sys.stdout:
@@ -52,9 +52,9 @@ class _Parser(argparse.ArgumentParser):
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """Return the argument parser behind the ``walkup`` command."""
+    """Return the argument parser behind the ``walkupward`` command."""
     parser = _Parser(
-        prog="walkup",
+        prog="walkupward",
         description="Walk up from a directory and print the nearest one holding a marker.",
         epilog=EXAMPLES,
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -64,14 +64,15 @@ def build_parser() -> argparse.ArgumentParser:
     add("-s", "--start", default=".", metavar="DIR", help="where to start (default: .)")
     add("-a", "--all", action="store_true", help="print every match, nearest first")
     add("-e", "--every", action="store_true", help="require every MARKER in one directory")
-    add("-k", "--kind", choices=("any", "file", "dir"), default="any", help="what MARKER is")
+    kinds = ("any", "file", "dir")
+    add("-k", "--kind", choices=kinds, help="what MARKER is (default: any)")
     add("-p", "--preset", choices=PRESETS, help="use a ready-made finder instead of MARKER")
     add("--ceiling", action="append", default=[], metavar="DIR", help="never enter DIR")
     add("--stop-at", metavar="DIR", help="search DIR last (inclusive boundary)")
     add("--same-filesystem", action="store_true", help="stop at a filesystem boundary")
     add("--lexical", action="store_true", help="keep symlinks in the path (no resolving)")
     add("--path", action="store_true", help="print the matched path, not its directory")
-    add("--version", action="version", version=f"walkup {__version__}")
+    add("--version", action="version", version=f"walkupward {__version__}")
     return parser
 
 
@@ -82,7 +83,8 @@ _PRESET_CONFLICTS = {
     "node": ("every", "kind"),
     "editorconfig": ("all", "every", "kind"),
 }
-_DEFAULTS = {"all": False, "every": False, "kind": "any", "lexical": False, "stop_at": None}
+# --kind defaults to None so that an explicit "--kind any" is still seen as given.
+_DEFAULTS = {"all": False, "every": False, "kind": None, "lexical": False, "stop_at": None}
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -93,10 +95,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         lines = list(_lines(args))
     except WalkupError as exc:
-        print(f"walkup: error: {exc}", file=sys.stderr)
+        print(f"walkupward: error: {exc}", file=sys.stderr)
         return 1
     except (OSError, ValueError, RuntimeError):
-        print("walkup: error: cannot inspect the requested path", file=sys.stderr)
+        print("walkupward: error: cannot inspect the requested path", file=sys.stderr)
         return 1
     if lines and not _emit("".join(line + "\n" for line in lines)):
         return 1
@@ -130,7 +132,7 @@ def _emit(text: str) -> bool:
     except UnicodeEncodeError:
         encoding = getattr(out, "encoding", None) or "unknown"
         print(
-            f"walkup: error: a path cannot be written in the output encoding ({encoding}); "
+            f"walkupward: error: a path cannot be written in the output encoding ({encoding}); "
             "set PYTHONIOENCODING=utf-8 or PYTHONUTF8=1",
             file=sys.stderr,
         )
@@ -155,7 +157,7 @@ def _lines(args: argparse.Namespace) -> Iterator[str]:
     if args.preset == "git":
         across = None if not args.same_filesystem else False
         found = iter_git_roots(
-            args.start, ceilings=env_ceilings() + ceilings, across_filesystems=across
+            args.start, ceilings=[*env_ceilings(args.start), *ceilings], across_filesystems=across
         )
     else:
         markers: tuple[Marker, ...]
@@ -164,7 +166,7 @@ def _lines(args: argparse.Namespace) -> Iterator[str]:
         elif args.preset == "node":
             markers = NODE_MARKERS
         else:
-            markers = tuple(Marker(name, args.kind) for name in args.markers)
+            markers = tuple(Marker(name, args.kind or "any") for name in args.markers)
         found = iter_matches(
             *markers,
             start=args.start,

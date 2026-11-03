@@ -10,16 +10,16 @@ from typing import get_type_hints
 
 import pytest
 
-import walkup
-from walkup._cli import main
+import walkupward
+from walkupward._cli import main
 
 
 def test_error_messages_do_not_echo_private_or_large_inputs(tmp_path: Path) -> None:
     secret = "private-token-" + "x" * 100_000
     errors = [
-        walkup.StartNotFoundError(Path(secret)),
-        walkup.WalkupPermissionError(Path(secret)),
-        walkup.MarkerNotFoundError((walkup.Marker(secret),), Path(secret), "all"),
+        walkupward.StartNotFoundError(Path(secret)),
+        walkupward.WalkupPermissionError(Path(secret)),
+        walkupward.MarkerNotFoundError((walkupward.Marker(secret),), Path(secret), "all"),
     ]
     for error in errors:
         assert len(str(error)) < 100 and "private-token" not in str(error)
@@ -27,25 +27,25 @@ def test_error_messages_do_not_echo_private_or_large_inputs(tmp_path: Path) -> N
         assert copied.__dict__ == error.__dict__
         assert str(copied) == str(error)
     for name in ("/" + secret, secret + "\0"):
-        with pytest.raises(walkup.InvalidMarkerError) as info:
-            walkup.Marker(name)
+        with pytest.raises(walkupward.InvalidMarkerError) as info:
+            walkupward.Marker(name)
         assert len(str(info.value)) < 100 and "private-token" not in str(info.value)
     for option in ("mode", "on_error"):
-        with pytest.raises(walkup.InvalidMarkerError) as info:
-            walkup.find("x", start=tmp_path, **{option: secret})  # type: ignore[arg-type]
+        with pytest.raises(walkupward.InvalidMarkerError) as info:
+            walkupward.find("x", start=tmp_path, **{option: secret})  # type: ignore[arg-type]
         assert len(str(info.value)) < 100 and "private-token" not in str(info.value)
 
 
 def test_marker_check_must_be_callable() -> None:
-    with pytest.raises(walkup.InvalidMarkerError, match="callable"):
-        walkup.Marker("x", check=42)  # type: ignore[arg-type]
+    with pytest.raises(walkupward.InvalidMarkerError, match="callable"):
+        walkupward.Marker("x", check=42)  # type: ignore[arg-type]
 
 
 def test_values_are_frozen_hashable_and_pickle_by_public_name(tmp_path: Path) -> None:
-    marker = walkup.Marker.file("x")
-    match = walkup.Match(tmp_path, (marker,), (tmp_path / "x",))
+    marker = walkupward.Marker.file("x")
+    match = walkupward.Match(tmp_path, (marker,), (tmp_path / "x",))
     for value in (marker, match):
-        assert value.__class__.__module__ == "walkup"
+        assert value.__class__.__module__ == "walkupward"
         assert pickle.loads(pickle.dumps(value)) == value
         assert hash(value) == hash(pickle.loads(pickle.dumps(value)))
         with pytest.raises(FrozenInstanceError):
@@ -53,8 +53,8 @@ def test_values_are_frozen_hashable_and_pickle_by_public_name(tmp_path: Path) ->
 
 
 def test_public_annotations_resolve_without_private_imports() -> None:
-    for name in walkup.__all__:
-        value = getattr(walkup, name)
+    for name in walkupward.__all__:
+        value = getattr(walkupward, name)
         if inspect.isfunction(value):
             assert get_type_hints(value)
         elif inspect.isclass(value):
@@ -80,4 +80,4 @@ def test_callback_exceptions_are_not_relabelled(tmp_path: Path) -> None:
         raise RuntimeError("callback failed")
 
     with pytest.raises(RuntimeError, match="callback failed"):
-        walkup.find(walkup.Marker("x", check=check), start=tmp_path)
+        walkupward.find(walkupward.Marker("x", check=check), start=tmp_path)

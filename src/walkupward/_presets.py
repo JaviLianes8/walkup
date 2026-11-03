@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections.abc import Iterable
 from pathlib import Path
 
-from walkup._search import find, iter_matches
-from walkup._types import Marker, Match
-from walkup._walk import StrPath
+from walkupward._search import find, iter_matches
+from walkupward._types import Marker, Match
+from walkupward._walk import StrPath
 
 PYTHON_MARKERS = (
     Marker.file("pyproject.toml"),

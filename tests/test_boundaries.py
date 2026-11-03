@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from walkup import _walk, find_all, walk_up
+from walkupward import _walk, find_all, walk_up
 
 
 @pytest.mark.parametrize("device", [None, 2])

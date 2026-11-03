@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from walkup import Marker, editorconfig_chain, find, find_all, iter_matches, walk_up
+from walkupward import Marker, editorconfig_chain, find, find_all, iter_matches, walk_up
 
 
 @pytest.mark.parametrize("seed", [7, 191, 20261103])

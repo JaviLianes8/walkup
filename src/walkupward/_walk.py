@@ -43,16 +43,34 @@ def walk_up(
     symlinked components stay in place, as ``pwd -L`` does. Ceilings and ``stop_at`` are
     normalised with the same policy before they are compared.
 
+    The arguments are checked when the call is made: a ``start``, ceiling or ``stop_at``
+    that is not a path raises ``TypeError`` before the first item is requested.
+
     >>> next(walk_up(".")) == Path.cwd()
     True
     """
-    origin = _normalise(start, resolve)
-    if origin.exists() and not origin.is_dir():
-        origin = origin.parent
+    origin = start_directory(start, resolve)
     ceiling = _nearest_ceiling(origin, ceilings, resolve)
     boundary = _normalise(stop_at, resolve) if stop_at is not None else None
     device = _device(origin) if same_filesystem else None
-    current = origin
+    return _climb(origin, ceiling, boundary, same_filesystem, device)
+
+
+def start_directory(start: StrPath, resolve: bool) -> Path:
+    """Return the absolute directory a walk from ``start`` yields first."""
+    origin = _normalise(start, resolve)
+    if origin.exists() and not origin.is_dir():
+        origin = origin.parent
+    return origin
+
+
+def _climb(
+    current: Path,
+    ceiling: Path | None,
+    boundary: Path | None,
+    same_filesystem: bool,
+    device: int | None,
+) -> Iterator[Path]:
     while True:
         yield current
         if boundary is not None and current == boundary:
@@ -72,11 +90,16 @@ def _normalise(path: StrPath, resolve: bool) -> Path:
 
 
 def _nearest_ceiling(origin: Path, ceilings: Iterable[StrPath], resolve: bool) -> Path | None:
+    # Compare each ceiling with one prefix of the start instead of building every
+    # ancestor, which costs quadratic time and memory on very deep paths.
+    parts = origin.parts
     nearest: Path | None = None
-    ancestors = set(origin.parents)
     for raw in ceilings:
         ceiling = _normalise(raw, resolve)
-        if ceiling in ancestors and (nearest is None or len(ceiling.parts) > len(nearest.parts)):
+        depth = len(ceiling.parts)
+        if depth >= len(parts) or (nearest is not None and depth <= len(nearest.parts)):
+            continue
+        if type(origin)(*parts[:depth]) == ceiling:
             nearest = ceiling
     return nearest
 
